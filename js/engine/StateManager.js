@@ -73,9 +73,9 @@ export class StateManager extends EventEmitter {
             case AircraftState.LANDED:
                 if (ac.assignedGate) {
                     const gt = this.getGate(ac.assignedGate);
-                    if (gt) {
+                    if (gt && gt.occupiedBy === ac.id) {
                         if (ac.assignedRunway) { const rw = this.getRunway(ac.assignedRunway); if (rw) { rw.occupied = false; rw.occupiedBy = null; } }
-                        ac.setTarget(gt.x, gt.y); ac.setState(AircraftState.TAXIING_TO_GATE); gt.occupied = true; gt.occupiedBy = ac.id; this.emit('aircraft_taxiing_to_gate', ac);
+                        ac.setTarget(gt.x, gt.y); ac.setState(AircraftState.TAXIING_TO_GATE); this.emit('aircraft_taxiing_to_gate', ac);
                     }
                 }
                 break;
@@ -114,6 +114,8 @@ export class StateManager extends EventEmitter {
         const ac = this.getAircraft(acId), gt = this.getGate(gId);
         if (!ac || !gt || gt.occupied) return false;
         ac.assignedGate = gId;
+        gt.occupied = true;
+        gt.occupiedBy = ac.id;
         return true;
     }
 
