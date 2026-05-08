@@ -53,6 +53,20 @@ export class ControlPanel {
         // AI Provider selector
         document.getElementById('ai-provider').addEventListener('change', (e) => {
             const key = e.target.value;
+            if (key === 'ollama') {
+                // Ollama uses host URL instead of API key
+                const ollamaSection = document.getElementById('ollama-config-section');
+                const apiSection = document.getElementById('api-key-section');
+                if (apiSection) apiSection.style.display = 'none';
+                if (ollamaSection) ollamaSection.style.display = 'block';
+                // Try connecting with default host
+                this._connectOllama();
+                return;
+            }
+            // Hide ollama section when switching away
+            const ollamaSection = document.getElementById('ollama-config-section');
+            if (ollamaSection) ollamaSection.style.display = 'none';
+
             if (key === 'openai' || key === 'anthropic' || key === 'gemini') {
                 const apiKey = localStorage.getItem(`apikey_${key}`) || '';
                 if (!apiKey) {
@@ -100,6 +114,42 @@ export class ControlPanel {
         this.engine.logger.on('decision', (d) => this._addDecisionEntry(d));
         this.engine.logger.on('event', (e) => this._addEventEntry(e));
         this.engine.crashAnalyzer.on('crash_report', (r) => this._addCrashReport(r));
+
+        // Setup Ollama connect button
+        const ollamaBtn = document.getElementById('btn-connect-ollama');
+        if (ollamaBtn) ollamaBtn.addEventListener('click', () => this._connectOllama());
+    }
+
+    async _connectOllama() {
+        const hostInput = document.getElementById('ollama-host');
+        const host = hostInput?.value?.trim() || 'http://localhost:11434';
+        const statusEl = document.getElementById('ollama-status');
+        const modelSelect = document.getElementById('ollama-model-select');
+
+        if (statusEl) statusEl.textContent = 'Connecting...';
+
+        // Create or get provider
+        const provider = this.engine.setupLLMProvider('ollama', host);
+        if (!provider) return;
+
+        const connected = await provider.checkConnection();
+        if (connected) {
+            if (statusEl) statusEl.textContent = `✅ Connected`;
+            // Populate model dropdown
+            if (modelSelect) {
+                const models = provider.getAvailableModels();
+                modelSelect.innerHTML = models.map(m =>
+                    `<option value="${m}"${m === provider.model ? ' selected' : ''}>${m}</option>`
+                ).join('');
+                modelSelect.style.display = models.length > 0 ? 'block' : 'none';
+                modelSelect.onchange = () => {
+                    provider.switchModel(modelSelect.value);
+                };
+            }
+            this.engine.setProvider('ollama');
+        } else {
+            if (statusEl) statusEl.textContent = '❌ Cannot connect';
+        }
     }
 
     _updatePlayButton() {
@@ -182,6 +232,9 @@ export class ControlPanel {
         let html = '';
         for (const ac of aircraft) {
             const fuelClass = ac.fuelEmergency ? 'critical' : ac.fuelLow ? 'low' : 'normal';
+            const boardingBar = ac.state === 'boarding'
+                ? `<div class="boarding-bar"><div class="boarding-fill" style="width:${Math.round((ac.boardingProgress || 0) * 100)}%"></div></div>`
+                : '';
             html += `<div class="aircraft-entry ${fuelClass}">
                 <div class="ac-header">
                     <span class="ac-callsign">${ac.callsign}</span>
@@ -191,6 +244,11 @@ export class ControlPanel {
                     <span class="ac-state" style="color:${this._getStateColor(ac.state)}">${ac.state.replace(/_/g, ' ')}</span>
                     <span class="ac-fuel fuel-${fuelClass}">⛽ ${Math.round(ac.fuel)}%</span>
                 </div>
+                <div class="ac-meta">
+                    <span class="ac-pax">👤 ${ac.passengerCount || '?'}</span>
+                    <span class="ac-route">${ac.origin || '?'} → ${ac.destination || '?'}</span>
+                </div>
+                ${boardingBar}
             </div>`;
         }
         list.innerHTML = html || '<div class="empty-state">No aircraft active</div>';
@@ -199,8 +257,8 @@ export class ControlPanel {
     _getStateColor(state) {
         const colors = {
             approaching: '#00e5ff', holding_air: '#ffc107', landing: '#76ff03',
-            landed: '#8bc34a', taxiing_to_gate: '#ff9800',
-            at_gate: '#9e9e9e',
+            go_around: '#ff6d00', landed: '#8bc34a', taxiing_to_gate: '#ff9800',
+            boarding: '#f48fb1', at_gate: '#9e9e9e',
             taxiing_to_runway: '#ff9800', holding_ground: '#ffc107',
             takeoff: '#e040fb', departing: '#7c4dff'
         };

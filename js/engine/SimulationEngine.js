@@ -13,6 +13,7 @@ import { RuleBasedAI } from '../ai/RuleBasedAI.js';
 import { OpenAIProvider } from '../ai/OpenAIProvider.js';
 import { AnthropicProvider } from '../ai/AnthropicProvider.js';
 import { GeminiProvider } from '../ai/GeminiProvider.js';
+import { OllamaProvider } from '../ai/OllamaProvider.js';
 import Config from '../utils/Config.js';
 import { EventEmitter } from '../utils/helpers.js';
 
@@ -64,6 +65,8 @@ export class SimulationEngine extends EventEmitter {
             this.perfTracker.recordCrash();
             this.crashAnalyzer.analyzeCrash(event);
             this.logger.logEvent('crash', event, 'critical');
+            // Record in state manager for AI context with reason
+            this.stateManager.recordCrash({ ...event, reason: 'COLLISION' });
             this.emit('crash', event);
         });
         this.collisionSystem.on('warning', (w) => {
@@ -88,7 +91,14 @@ export class SimulationEngine extends EventEmitter {
         });
         this.fuelSystem.on('fuel_exhausted', (ac) => {
             this.logger.logEvent('fuel_exhausted', { callsign: ac.callsign }, 'critical');
+            // Tag crash reason before removal
             ac.crashReason = 'FUEL_DEPLETION';
+            this.stateManager.recordCrash({
+                type: 'fuel_depletion',
+                reason: 'FUEL_DEPLETION',
+                aircraftA: ac.getStatusSnapshot(),
+                aircraftB: null
+            });
             this.stateManager.removeAircraft(ac);
             this.perfTracker.recordCrash();
         });
@@ -127,6 +137,10 @@ export class SimulationEngine extends EventEmitter {
             case 'gemini':
                 provider = new GeminiProvider(apiKey, model || 'gemini-2.5-flash');
                 this.registerProvider('gemini', provider);
+                break;
+            case 'ollama':
+                provider = new OllamaProvider(apiKey || 'http://localhost:11434', model || 'llama3.1');
+                this.registerProvider('ollama', provider);
                 break;
         }
         return provider;
@@ -202,8 +216,10 @@ export class SimulationEngine extends EventEmitter {
         // 4. Fuel management
         this.fuelSystem.update(deltaTime);
 
-        // 5. Collision detection
+        // 5. Collision detection (also updates warnings for AI)
         this.collisionSystem.update(deltaTime);
+        // Pipe active collision warnings into state manager for AI prompt enrichment
+        this.stateManager.setCollisionWarnings(this.collisionSystem.getWarnings());
 
         // 6. AI decisions (throttled)
         if (this.simulationTime - this.lastAICall >= this.aiInterval && !this.aiPending) {
@@ -275,11 +291,7 @@ export class SimulationEngine extends EventEmitter {
                 break;
             case 'GO_AROUND': {
                 const ac = this.stateManager.getAircraft(aircraftId);
-                if (ac && ac.state === AircraftState.LANDING) {
-                    ac.setState(AircraftState.HOLDING_AIR);
-                    this.perfTracker.recordGoAround();
-                    success = true;
-                }
+                if (ac) { success = ac.startGoAround(); if (success) this.perfTracker.recordGoAround(); }
                 break;
             }
             case 'PRIORITY_LANDING':
@@ -288,6 +300,21 @@ export class SimulationEngine extends EventEmitter {
             case 'START_DEPARTURE':
                 success = this.stateManager.startDeparture(aircraftId, parameters.runwayId);
                 break;
+            case 'COLLISION_AVOIDANCE': {
+                const ac = this.stateManager.getAircraft(aircraftId);
+                if (ac) {
+                    // Apply collision avoidance — force go-around for landing aircraft,
+                    // or apply avoidance vector for others
+                    if (ac.state === 'landing') {
+                        success = ac.startGoAround();
+                        if (success) this.perfTracker.recordGoAround();
+                    } else {
+                        ac.applyAvoidance({ x: (Math.random() - 0.5) * 8, y: (Math.random() - 0.5) * 8 });
+                        success = true;
+                    }
+                }
+                break;
+            }
             case 'EXPEDITE': {
                 const ac = this.stateManager.getAircraft(aircraftId);
                 if (ac) { ac.speed *= 1.3; success = true; }

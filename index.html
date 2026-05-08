@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Airport simulation for testing and comparing LLM performance in air traffic control scenarios. Evaluate AI safety, efficiency, and decision-making.">
     <title>LLM ATC Simulation — Air Traffic Control AI Testing</title>
-    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/index.css?v=2">
     <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
 </head>
 <body>
@@ -59,6 +59,7 @@
                         <label>AI Controller</label>
                         <select id="ai-provider">
                             <option value="rule-based">🤖 Rule-Based AI (Default)</option>
+                            <option value="ollama">🦙 Ollama (Local LLM)</option>
                             <option value="openai">🟢 OpenAI GPT-4o</option>
                             <option value="anthropic">🟣 Anthropic Claude</option>
                             <option value="gemini">🔵 Google Gemini</option>
@@ -67,6 +68,11 @@
                             <input type="password" id="api-key-input" placeholder="Enter API key..." data-provider="">
                             <button id="btn-save-key" class="control-btn primary" style="width:100%">Save & Activate</button>
                         </div>
+                        <div id="ollama-config-section" style="display:none">
+                            <input type="text" id="ollama-host" placeholder="http://localhost:11434" value="http://localhost:11434">
+                            <select id="ollama-model-select" style="display:none; margin-top:6px"></select>
+                            <button id="btn-connect-ollama" class="control-btn primary" style="width:100%; margin-top:6px">Connect</button>
+                            <div id="ollama-status" class="ollama-status"></div>
                         </div>
                     </div>
 
@@ -173,6 +179,6 @@
         </div>
     </div>
 
-    <script type="module" src="js/main.js"></script>
+    <script type="module" src="js/main.js?v=2"></script>
 </body>
 </html>
