@@ -10,8 +10,10 @@ export const AircraftState = {
     APPROACHING: 'approaching',
     HOLDING_AIR: 'holding_air',
     LANDING: 'landing',
+    GO_AROUND: 'go_around',
     LANDED: 'landed',
     TAXIING_TO_GATE: 'taxiing_to_gate',
+    BOARDING: 'boarding',
     AT_GATE: 'at_gate',
     TAXIING_TO_RUNWAY: 'taxiing_to_runway',
     HOLDING_GROUND: 'holding_ground',
@@ -21,12 +23,27 @@ export const AircraftState = {
 };
 
 // Valid state transitions
+// Passenger capacity by aircraft type
+const PASSENGER_CAPACITY = {
+    'A320': [140, 180],
+    'B737': [120, 180],
+    'B777': [300, 400],
+    'A380': [500, 850],
+    'ATR72': [50, 72]
+};
+
+// Flight origin/destination pools for realism
+const ORIGINS = ['JFK', 'LAX', 'ORD', 'DFW', 'DEN', 'SFO', 'SEA', 'MIA', 'BOS', 'ATL', 'CDG', 'LHR', 'NRT', 'DXB', 'SIN'];
+const DESTINATIONS = ['ATL', 'BOS', 'LAS', 'PHX', 'IAH', 'CLT', 'MSP', 'DTW', 'FRA', 'AMS', 'HND', 'ICN', 'SYD', 'YYZ'];
+
 const VALID_TRANSITIONS = {
     [AircraftState.APPROACHING]: [AircraftState.HOLDING_AIR, AircraftState.LANDING],
     [AircraftState.HOLDING_AIR]: [AircraftState.LANDING, AircraftState.APPROACHING],
-    [AircraftState.LANDING]: [AircraftState.LANDED],
+    [AircraftState.LANDING]: [AircraftState.LANDED, AircraftState.GO_AROUND],
+    [AircraftState.GO_AROUND]: [AircraftState.HOLDING_AIR],
     [AircraftState.LANDED]: [AircraftState.TAXIING_TO_GATE],
-    [AircraftState.TAXIING_TO_GATE]: [AircraftState.AT_GATE],
+    [AircraftState.TAXIING_TO_GATE]: [AircraftState.BOARDING],
+    [AircraftState.BOARDING]: [AircraftState.AT_GATE],
     [AircraftState.AT_GATE]: [AircraftState.TAXIING_TO_RUNWAY],
     [AircraftState.TAXIING_TO_RUNWAY]: [AircraftState.HOLDING_GROUND, AircraftState.TAKEOFF],
     [AircraftState.HOLDING_GROUND]: [AircraftState.TAKEOFF],
@@ -49,6 +66,14 @@ export class Aircraft {
         this.maxSpeed = selectedType.maxSpeed;
         this.color = selectedType.color;
         this.engines = selectedType.engines || 'twin-jet';
+
+        // Passenger info
+        const [minPax, maxPax] = PASSENGER_CAPACITY[this.type] || [100, 200];
+        this.passengerCount = Math.floor(randomRange(minPax, maxPax));
+
+        // Flight origin / destination (cosmetic realism)
+        this.origin = ORIGINS[Math.floor(Math.random() * ORIGINS.length)];
+        this.destination = DESTINATIONS[Math.floor(Math.random() * DESTINATIONS.length)];
 
         // Position & movement
         this.x = 0;
@@ -83,11 +108,16 @@ export class Aircraft {
         this.fuelEmergency = false;
         this.fuelLow = false;
         this.collisionAvoidanceActive = false;
+        this.goAroundCount = 0;
 
         // Timers
         this.stateTimer = 0;
         this.gateTimer = 0;
-        this.gateOperationDuration = Config.get('aircraft.gate_time', 15000);
+        // Boarding time based on passengers: 3s base + 0.08s per pax (in ms)
+        this.boardingDuration = 3000 + this.passengerCount * 80;
+        // Gate operation = boarding + 5s turnaround buffer
+        this.gateOperationDuration = this.boardingDuration + 5000;
+        this.boardingProgress = 0; // 0-1 fraction
         this.holdingAngle = Math.random() * Math.PI * 2;
         this.holdingRadius = randomRange(60, 100);
         this.holdingCenter = null;
@@ -154,6 +184,16 @@ export class Aircraft {
                 this.altitude = lerp(this.altitude, 0, dt * 0.5);
                 break;
 
+            case AircraftState.GO_AROUND:
+                // Climb out at full power and transition to holding
+                this._moveToTarget(dt, this.maxSpeed * 0.9);
+                this.altitude = lerp(this.altitude, 2500, dt * 0.4);
+                // After reaching holding altitude / climbing for 3s, transition to hold
+                if (this.stateTimer > 3000) {
+                    this.setState(AircraftState.HOLDING_AIR);
+                }
+                break;
+
             case AircraftState.LANDED:
                 this.speed = lerp(this.speed, 0, dt * 2);
                 break;
@@ -162,10 +202,24 @@ export class Aircraft {
                 this._moveToTarget(dt, Config.get('airport.taxiway_speed', 1.5));
                 break;
 
+            case AircraftState.BOARDING:
+                this.speed = 0;
+                this.gateTimer += deltaTime;
+                this.boardingProgress = clamp(this.gateTimer / this.boardingDuration, 0, 1);
+                // Refueling happens in parallel during boarding
+                if (this.isRefueling && this.fuel < this.refuelTarget) {
+                    const refuelRate = Config.get('aircraft.fuel.refuel_rate', 0.5);
+                    this.fuel = Math.min(this.refuelTarget, this.fuel + refuelRate * dt);
+                    if (this.fuel >= this.refuelTarget) {
+                        this.isRefueling = false;
+                    }
+                }
+                break;
+
             case AircraftState.AT_GATE:
                 this.speed = 0;
                 this.gateTimer += deltaTime;
-                // Refueling
+                // Continue refueling at gate if not done during boarding
                 if (this.isRefueling && this.fuel < this.refuelTarget) {
                     const refuelRate = Config.get('aircraft.fuel.refuel_rate', 0.5);
                     this.fuel = Math.min(this.refuelTarget, this.fuel + refuelRate * dt);
@@ -271,13 +325,26 @@ export class Aircraft {
 
         // State entry actions
         switch (newState) {
-            case AircraftState.AT_GATE:
+            case AircraftState.BOARDING:
                 this.speed = 0;
                 this.gateTimer = 0;
+                this.boardingProgress = 0;
                 this.isRefueling = true;
+                break;
+            case AircraftState.AT_GATE:
+                this.speed = 0;
+                // Don't reset gateTimer — it carries over from boarding
                 break;
             case AircraftState.HOLDING_AIR:
                 this.holdingCenter = { x: this.x, y: this.y };
+                break;
+            case AircraftState.GO_AROUND:
+                this.goAroundCount++;
+                this.altitude = Math.max(this.altitude, 500);
+                // Set a climb-out target ahead and above
+                const climbX = this.x - 150 + Math.random() * 100;
+                const climbY = this.y + (Math.random() - 0.5) * 200;
+                this.setTarget(climbX, climbY);
                 break;
             case AircraftState.LANDED:
                 this.altitude = 0;
@@ -287,6 +354,13 @@ export class Aircraft {
                 break;
         }
 
+        return true;
+    }
+
+    startGoAround() {
+        if (this.state !== AircraftState.LANDING) return false;
+        this.setState(AircraftState.GO_AROUND);
+        this.assignedRunway = null;
         return true;
     }
 
@@ -300,6 +374,7 @@ export class Aircraft {
             AircraftState.APPROACHING,
             AircraftState.HOLDING_AIR,
             AircraftState.LANDING,
+            AircraftState.GO_AROUND,
             AircraftState.DEPARTING,
             AircraftState.TAKEOFF
         ].includes(this.state);
@@ -309,6 +384,7 @@ export class Aircraft {
         return [
             AircraftState.LANDED,
             AircraftState.TAXIING_TO_GATE,
+            AircraftState.BOARDING,
             AircraftState.AT_GATE,
             AircraftState.TAXIING_TO_RUNWAY,
             AircraftState.HOLDING_GROUND
@@ -325,8 +401,13 @@ export class Aircraft {
 
     isReadyForDeparture() {
         return this.state === AircraftState.AT_GATE &&
-            this.gateTimer >= this.gateOperationDuration &&
+            this.stateTimer >= 5000 &&  // 5s turnaround at gate after boarding
             !this.isRefueling;
+    }
+
+    getBoardingProgress() {
+        if (this.state !== AircraftState.BOARDING) return this.state === AircraftState.AT_GATE ? 1 : 0;
+        return this.boardingProgress;
     }
 
     getStatusSnapshot() {
@@ -345,11 +426,16 @@ export class Aircraft {
             isEmergency: this.isEmergency,
             assignedRunway: this.assignedRunway,
             assignedGate: this.assignedGate,
+            goAroundCount: this.goAroundCount,
             collisionAvoidanceActive: this.collisionAvoidanceActive,
             timeInState: this.stateTimer,
             needsRunway: this.needsRunwayAssignment(),
             needsGate: this.needsGateAssignment(),
             readyForDeparture: this.isReadyForDeparture(),
+            passengers: this.passengerCount,
+            origin: this.origin,
+            destination: this.destination,
+            boardingProgress: this.getBoardingProgress(),
             crashReason: this.crashReason
         };
     }

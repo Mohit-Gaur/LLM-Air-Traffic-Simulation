@@ -13,6 +13,8 @@ export class StateManager extends EventEmitter {
         this.aircraft = [];
         this.runways = [];
         this.gates = [];
+        this.crashHistory = [];        // Track crash history for AI context
+        this.activeCollisionWarnings = [];  // Active collision warnings for AI
         this._initAirport();
     }
 
@@ -78,7 +80,10 @@ export class StateManager extends EventEmitter {
                 }
                 break;
             case AircraftState.TAXIING_TO_GATE:
-                if (ac.hasReachedTarget()) { ac.setState(AircraftState.AT_GATE); this.emit('aircraft_at_gate', ac); }
+                if (ac.hasReachedTarget()) { ac.setState(AircraftState.BOARDING); this.emit('aircraft_boarding', ac); }
+                break;
+            case AircraftState.BOARDING:
+                if (ac.boardingProgress >= 1) { ac.setState(AircraftState.AT_GATE); this.emit('aircraft_at_gate', ac); }
                 break;
             case AircraftState.TAXIING_TO_RUNWAY:
                 if (ac.hasReachedTarget()) {
@@ -152,12 +157,45 @@ export class StateManager extends EventEmitter {
     getAirborneAircraft() { return this.aircraft.filter(a => a.isAirborne()); }
     getGroundAircraft() { return this.aircraft.filter(a => a.isOnGround()); }
 
+    // Track crash for AI learning context
+    recordCrash(crashInfo) {
+        this.crashHistory.push({
+            ...crashInfo,
+            time: Date.now()
+        });
+        // Keep last 20 crashes
+        if (this.crashHistory.length > 20) this.crashHistory.shift();
+    }
+
+    // Update collision warnings for AI context
+    setCollisionWarnings(warnings) {
+        this.activeCollisionWarnings = warnings;
+    }
+
     getSnapshot() {
         return {
             aircraft: this.aircraft.map(a => a.getStatusSnapshot()),
             runways: this.runways.map(r => ({ id: r.id, label: r.label, occupied: r.occupied, occupiedBy: r.occupiedBy ? this.getAircraft(r.occupiedBy)?.callsign : null })),
             gates: this.gates.map(g => ({ id: g.id, occupied: g.occupied, occupiedBy: g.occupiedBy ? this.getAircraft(g.occupiedBy)?.callsign : null })),
-            counts: { total: this.aircraft.length, airborne: this.getAirborneAircraft().length, ground: this.getGroundAircraft().length, freeRunways: this.getFreeRunways().length, freeGates: this.getFreeGates().length }
+            counts: { total: this.aircraft.length, airborne: this.getAirborneAircraft().length, ground: this.getGroundAircraft().length, freeRunways: this.getFreeRunways().length, freeGates: this.getFreeGates().length },
+            // Safety context for AI
+            safetyContext: {
+                totalCrashes: this.crashHistory.length,
+                recentCrashes: this.crashHistory.slice(-3).map(c => ({
+                    callsignA: c.aircraftA?.callsign || 'Unknown',
+                    callsignB: c.aircraftB?.callsign || 'Unknown',
+                    type: c.type || 'collision',
+                    reason: c.reason || 'unknown'
+                })),
+                fuelEmergencyCount: this.aircraft.filter(a => a.fuelEmergency).length,
+                lowFuelCount: this.aircraft.filter(a => a.fuelLow).length
+            },
+            // Active collision warnings
+            collisionWarnings: this.activeCollisionWarnings.map(([key, w]) => ({
+                aircraftA: this.getAircraft(w.aircraftA)?.callsign || w.aircraftA,
+                aircraftB: this.getAircraft(w.aircraftB)?.callsign || w.aircraftB,
+                level: w.level
+            }))
         };
     }
 }
