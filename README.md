@@ -6,7 +6,7 @@ A sophisticated airport simulation designed for testing and comparing Large Lang
 
 ---
 
-## 🎯 Purpose
+## Purpose
 
 By presenting identical scenarios to different AI models, this simulation objectively evaluates:
 
@@ -18,9 +18,9 @@ By presenting identical scenarios to different AI models, this simulation object
 | **Decision Speed** | Response latency and consistency under pressure |
 | **Learning from Mistakes** | Crash analysis and improvement over time |
 
-## 🚀 Quick Start
+## Quick Start
 
-No build tools, no npm, no bundlers — just open and run.
+Just open and run.
 
 ```bash
 # Option 1: Python (built-in)
@@ -34,7 +34,7 @@ Then open **http://localhost:3000** in your browser. The simulation auto-starts.
 
 > **Note:** A local HTTP server is required because the app uses ES modules and loads `config.yaml` via `fetch()`.
 
-## 🏗 Architecture
+## Architecture
 
 ```
 Project/
@@ -76,16 +76,16 @@ Project/
 
 ```
 SimulationEngine (main loop)
-├── FlightScheduler    → Sector-based aircraft spawning, congestion-aware rates
-├── CollisionSystem    → 4-layer collision prevention (warn → avoid → emergency → crash)
-├── FuelSystem         → Per-state consumption, emergency detection, runway clearing
-├── StateManager       → Aircraft lifecycle, runway/gate resource management
-├── AI Adapter         → Pluggable LLM interface (hot-swappable mid-simulation)
-├── Renderer           → HTML5 Canvas with radar sweep, aircraft silhouettes, HUD
-└── ControlPanel       → Tabbed UI (Controls, Aircraft, Decisions, Metrics, Crashes)
+├── FlightScheduler    - Sector-based aircraft spawning, congestion-aware rates
+├── CollisionSystem    - 4-layer collision prevention (warn → avoid → emergency → crash)
+├── FuelSystem         - Per-state consumption, emergency detection, runway clearing
+├── StateManager       - Aircraft lifecycle, runway/gate resource management
+├── AI Adapter         - Pluggable LLM interface (hot-swappable mid-simulation)
+├── Renderer           - HTML5 Canvas with radar sweep, aircraft silhouettes, HUD
+└── ControlPanel       - Tabbed UI (Controls, Aircraft, Decisions, Metrics, Crashes)
 ```
 
-## ✈ Aircraft Types
+## Aircraft Types
 
 The simulation features five distinct aircraft types, each rendered as a recognizable top-down silhouette:
 
@@ -98,12 +98,12 @@ The simulation features five distinct aircraft types, each rendered as a recogni
 | **ATR72** | Turboprop | Twin propellers | Straight high wings, spinning prop discs |
 
 All aircraft feature:
-- **Navigation lights** — red (port) and green (starboard) wingtip lights that blink
-- **Nose/tail lights** — always-on white position lights
-- **State-based coloring** — cyan (approaching), green (landing), amber (holding), purple (departing)
-- **Fuel bars** — green → yellow → red as fuel depletes
+- **Navigation lights** - red (port) and green (starboard) wingtip lights that blink
+- **Nose/tail lights** - always-on white position lights
+- **State-based coloring** - cyan (approaching), green (landing), amber (holding), purple (departing)
+- **Fuel bars** - green → yellow → red as fuel depletes
 
-## 🔄 Aircraft Lifecycle (11 States)
+## Aircraft Lifecycle (11 States)
 
 ```
 APPROACHING → HOLDING_AIR → LANDING → LANDED → TAXIING_TO_GATE →
@@ -113,7 +113,7 @@ APPROACHING → HOLDING_AIR → LANDING → LANDED → TAXIING_TO_GATE →
 
 Each state has specific fuel consumption rates, speed profiles, and transition rules.
 
-## 🛡 Collision Prevention (4 Layers)
+## Collision Prevention (4 Layers)
 
 | Layer | Distance | Response |
 |-------|----------|----------|
@@ -122,27 +122,27 @@ Each state has specific fuel consumption rates, speed profiles, and transition r
 | **Emergency** | 80px | Hard avoidance, speed changes, go-around triggers |
 | **Crash** | 15px | Crash event logged, aircraft removed, root cause analysis |
 
-## ⛽ Fuel Management
+## Fuel Management
 
-- **Per-state consumption rates** — takeoff: 30%, holding: 20%, cruise: 15%, landing: 10%
-- **Emergency thresholds** — critical (<15%), low (<25%)
-- **Automatic priority** — fuel-emergency aircraft get immediate runway assignment
-- **Runway clearing** — can force go-arounds to free runways for emergencies
-- **Refueling at gates** — 0.5%/second with random target between 50-100%
+- **Per-state consumption rates** - takeoff: 30%, holding: 20%, cruise: 15%, landing: 10%
+- **Emergency thresholds** - critical (<15%), low (<25%)
+- **Automatic priority** - fuel-emergency aircraft get immediate runway assignment
+- **Runway clearing** - can force go-arounds to free runways for emergencies
+- **Refueling at gates** - 0.5%/second with random target between 50-100%
 
-## 🤖 AI Providers
+## AI Providers
 
 ### Built-in (No API Key Required)
 
-- **Rule-Based AI** — deterministic controller with priority-based decisions. Serves as baseline for LLM comparison.
+- **Rule-Based AI** - deterministic controller with priority-based decisions. Serves as baseline for LLM comparison.
 
 ### LLM Providers (API Key Required)
 
 | Provider | Model | How to Enable |
 |----------|-------|--------------|
-| **OpenAI** | GPT-4o | Select from dropdown → enter API key |
-| **Anthropic** | Claude Sonnet | Select from dropdown → enter API key |
-| **Google** | Gemini 2.5 Flash | Select from dropdown → enter API key |
+| **OpenAI** | GPT-4o | Select from dropdown - enter API key |
+| **Anthropic** | Claude Sonnet | Select from dropdown - enter API key |
+| **Google** | Gemini 2.5 Flash | Select from dropdown - enter API key |
 
 API keys are stored **only in your browser's localStorage** and are sent exclusively to the respective provider's API endpoint.
 
@@ -150,7 +150,7 @@ API keys are stored **only in your browser's localStorage** and are sent exclusi
 
 Switch between AI providers mid-simulation to compare decision-making in real-time. All decisions are logged with the provider name and response time.
 
-## 📊 Metrics & Analysis
+## Metrics & Analysis
 
 ### Performance Dashboard
 
@@ -183,17 +183,17 @@ Each crash generates a detailed report:
 
 Click **"Export Logs"** to download the complete decision history as JSON for external analysis.
 
-## ⚙️ Configuration
+## Configuration
 
-All simulation parameters are defined in [`config.yaml`](config.yaml) — human-readable YAML:
+All simulation parameters are defined in [`config.yaml`](config.yaml) - human-readable YAML:
 
 ```yaml
 aircraft:
   spawn_rate: { min: 5000, max: 12000 }  # ms between spawns
   max_active: 12
   fuel:
-    emergency_threshold: 15               # % fuel → critical
-    low_threshold: 25                     # % fuel → low priority
+    emergency_threshold: 15               # % fuel - critical
+    low_threshold: 25                     # % fuel - low priority
     refuel_rate: 0.5                      # % per second at gate
 
 collision:
@@ -207,7 +207,7 @@ ai:
   timeout: 10000                          # max wait for AI response
 ```
 
-## 🖥 Controls
+## Controls
 
 | Control | Action |
 |---------|--------|
@@ -220,21 +220,21 @@ ai:
 
 ### Sidebar Tabs
 
-- **Controls** — simulation controls and quick metrics
-- **Aircraft** — live list of all aircraft with state and fuel
-- **Decisions** — scrollable AI decision log with timestamps
-- **Metrics** — full performance dashboard with throughput chart
-- **Crashes** — crash analysis reports with contributing factors
+- **Controls** - simulation controls and quick metrics
+- **Aircraft** - live list of all aircraft with state and fuel
+- **Decisions** - scrollable AI decision log with timestamps
+- **Metrics** - full performance dashboard with throughput chart
+- **Crashes** - crash analysis reports with contributing factors
 
-## 🛠 Technical Details
+## Technical Details
 
-- **Zero dependencies** — no npm, no build tools, no frameworks
-- **Pure ES modules** — modern `import`/`export` syntax
-- **HTML5 Canvas** — 60fps rendering with `requestAnimationFrame`
-- **YAML config** — loaded via `js-yaml` CDN at runtime
-- **localStorage** — API keys persisted securely in-browser
-- **Event-driven** — components communicate via `EventEmitter` pattern
+- **Zero dependencies** - no npm, no build tools, no frameworks
+- **Pure ES modules** - modern `import`/`export` syntax
+- **HTML5 Canvas** - 60fps rendering with `requestAnimationFrame`
+- **YAML config** - loaded via `js-yaml` CDN at runtime
+- **localStorage** - API keys persisted securely in-browser
+- **Event-driven** - components communicate via `EventEmitter` pattern
 
-## 📝 License
+## License
 
-MIT License — use freely for research, education, and AI evaluation.
+MIT License - use freely for research, education, and AI evaluation.
