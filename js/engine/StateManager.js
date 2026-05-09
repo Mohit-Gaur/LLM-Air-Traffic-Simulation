@@ -95,7 +95,7 @@ export class StateManager extends EventEmitter {
             case AircraftState.TAKEOFF:
                 if (ac.hasReachedTarget()) {
                     if (ac.assignedRunway) { const rw = this.getRunway(ac.assignedRunway); if (rw) { rw.occupied = false; rw.occupiedBy = null; } }
-                    if (ac.assignedGate) { const gt = this.getGate(ac.assignedGate); if (gt) { gt.occupied = false; gt.occupiedBy = null; } }
+                    if (ac.assignedGate) { const gt = this.getGate(ac.assignedGate); if (gt && gt.occupiedBy === ac.id) { gt.occupied = false; gt.occupiedBy = null; } }
                     ac.setState(AircraftState.DEPARTING); ac.setTarget(1300, ac.y + (Math.random() - 0.5) * 100); this.emit('aircraft_departing', ac);
                 }
                 break;
@@ -122,7 +122,7 @@ export class StateManager extends EventEmitter {
     startDeparture(acId, rwId) {
         const ac = this.getAircraft(acId), rw = this.getRunway(rwId);
         if (!ac || !rw || ac.state !== AircraftState.AT_GATE) return false;
-        if (ac.assignedGate) { const gt = this.getGate(ac.assignedGate); if (gt) { gt.occupied = false; gt.occupiedBy = null; } }
+        if (ac.assignedGate) { const gt = this.getGate(ac.assignedGate); if (gt) { gt.occupied = false; gt.occupiedBy = null; } ac.assignedGate = null; }
         ac.assignedRunway = rwId; ac.setTarget(rw.x, rw.y); ac.setState(AircraftState.TAXIING_TO_RUNWAY); this.emit('aircraft_taxiing_to_runway', ac);
         return true;
     }
