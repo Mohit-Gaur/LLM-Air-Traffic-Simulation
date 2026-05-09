@@ -5,10 +5,10 @@
 import { LLMAdapter } from './LLMAdapter.js';
 
 export class OpenAIProvider extends LLMAdapter {
-    constructor(apiKey, model = 'gpt-4o') {
+    constructor(apiKey, model = 'gpt-4o', baseUrl = 'https://api.openai.com/v1') {
         super(`OpenAI ${model}`, model);
         this.apiKey = apiKey;
-        this.endpoint = 'https://api.openai.com/v1/chat/completions';
+        this.endpoint = `${baseUrl}/chat/completions`;
     }
 
     async getDecisions(state) {

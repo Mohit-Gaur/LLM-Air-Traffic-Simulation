@@ -142,6 +142,10 @@ export class SimulationEngine extends EventEmitter {
                 provider = new OllamaProvider(apiKey || 'http://localhost:11434', model || 'llama3.1');
                 this.registerProvider('ollama', provider);
                 break;
+            case 'lmstudio':
+                provider = new OpenAIProvider('lm-studio', model || 'local-model', 'http://localhost:1234/v1');
+                this.registerProvider('lmstudio', provider);
+                break;
         }
         return provider;
     }
