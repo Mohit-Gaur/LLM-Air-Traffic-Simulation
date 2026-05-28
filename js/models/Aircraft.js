@@ -179,10 +179,15 @@ export class Aircraft {
                 this._doHoldingPattern(dt);
                 break;
 
-            case AircraftState.LANDING:
-                this._moveToTarget(dt, this.maxSpeed * 0.6);
-                this.altitude = lerp(this.altitude, 0, dt * 0.5);
+            case AircraftState.LANDING: {
+                // Decelerate along the runway: start at approach speed then brake
+                const landDist = this.targetX !== null ? distance(this, { x: this.targetX, y: this.targetY }) : 0;
+                const landSpeed = Math.max(0.8, this.maxSpeed * 0.6 * Math.min(1, landDist / 150));
+                this._moveToTarget(dt, landSpeed);
+                // Altitude drops to 0 quickly at touchdown then stays at 0
+                this.altitude = this.altitude > 10 ? lerp(this.altitude, 0, dt * 2.0) : 0;
                 break;
+            }
 
             case AircraftState.GO_AROUND:
                 // Climb out at full power and transition to holding

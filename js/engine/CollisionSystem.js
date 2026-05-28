@@ -41,6 +41,28 @@ export class CollisionSystem extends EventEmitter {
                 const groundTaxiStates = [AircraftState.TAXIING_TO_GATE, AircraftState.TAXIING_TO_RUNWAY, AircraftState.LANDED, AircraftState.HOLDING_GROUND];
                 if (groundTaxiStates.includes(a.state) && groundTaxiStates.includes(b.state)) continue;
 
+                // Skip pairs on separate assigned runways (parallel operations are safe)
+                // Only apply crash detection as a safety net for these pairs
+                const runwayOpStates = [AircraftState.APPROACHING, AircraftState.LANDING, AircraftState.TAKEOFF, AircraftState.DEPARTING, AircraftState.HOLDING_AIR];
+                const bothOnRunwayOps = runwayOpStates.includes(a.state) && runwayOpStates.includes(b.state);
+                const onDifferentRunways = a.assignedRunway && b.assignedRunway && a.assignedRunway !== b.assignedRunway;
+                if (bothOnRunwayOps && onDifferentRunways) {
+                    const dist = distance(a, b);
+                    if (dist <= crashDist) this._handleCrash(a, b, dist);
+                    continue;
+                }
+
+                // Skip pairs where either aircraft is awaiting ATC runway assignment.
+                // These are new arrivals in the approach zone — not yet on a committed
+                // flight path, so proximity warnings are false alarms. Still detect crashes.
+                const awaitingAssignment = (ac) => !ac.assignedRunway &&
+                    (ac.state === AircraftState.APPROACHING || ac.state === AircraftState.HOLDING_AIR);
+                if (awaitingAssignment(a) || awaitingAssignment(b)) {
+                    const dist = distance(a, b);
+                    if (dist <= crashDist) this._handleCrash(a, b, dist);
+                    continue;
+                }
+
                 const dist = distance(a, b);
                 const pairKey = a.id < b.id ? `${a.id}-${b.id}` : `${b.id}-${a.id}`;
                 currentPairs.add(pairKey);

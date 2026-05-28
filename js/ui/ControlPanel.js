@@ -346,6 +346,9 @@ export class ControlPanel {
     _addCrashReport(report) {
         const container = document.getElementById('crash-reports');
         if (!container) return;
+        // Remove the empty-state placeholder
+        const emptyState = container.querySelector('.empty-state');
+        if (emptyState) emptyState.remove();
         const el = document.createElement('div');
         el.className = 'crash-report';
         el.innerHTML = `<div class="crash-header">💥 Crash #${report.id + 1} — ${report.timeStr}</div>
@@ -367,7 +370,7 @@ export class ControlPanel {
 
     _clearCrashReports() {
         const container = document.getElementById('crash-reports');
-        if (container) container.innerHTML = '';
+        if (container) container.innerHTML = '<div class="empty-state">No crashes recorded — safety first! ✅</div>';
         const badge = document.getElementById('crash-badge');
         if (badge) badge.style.display = 'none';
     }

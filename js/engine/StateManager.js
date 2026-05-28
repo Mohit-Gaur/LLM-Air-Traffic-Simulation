@@ -64,6 +64,7 @@ export class StateManager extends EventEmitter {
             case AircraftState.APPROACHING:
                 if (ac.assignedRunway && ac.hasReachedTarget()) {
                     const rw = this.getRunway(ac.assignedRunway);
+                    // Touch down at runway threshold (right end) and roll toward the left end
                     if (rw) { ac.setTarget(rw.x, rw.y); ac.setState(AircraftState.LANDING); rw.occupied = true; rw.occupiedBy = ac.id; this.emit('aircraft_landing', ac); }
                 }
                 break;
@@ -106,7 +107,7 @@ export class StateManager extends EventEmitter {
         const ac = this.getAircraft(acId), rw = this.getRunway(rwId);
         if (!ac || !rw) return false;
         ac.assignedRunway = rwId;
-        if (ac.state === AircraftState.APPROACHING) ac.setTarget(rw.x + rw.length + 100, rw.y);
+        if (ac.state === AircraftState.APPROACHING) ac.setTarget(rw.x + rw.length, rw.y);
         return true;
     }
 
@@ -140,7 +141,7 @@ export class StateManager extends EventEmitter {
         if (!ac) return false;
         if (ac.state === AircraftState.HOLDING_AIR && ac.assignedRunway) {
             const rw = this.getRunway(ac.assignedRunway);
-            if (rw) { ac.setTarget(rw.x + rw.length + 100, rw.y); ac.setState(AircraftState.APPROACHING); return true; }
+            if (rw) { ac.setTarget(rw.x + rw.length, rw.y); ac.setState(AircraftState.APPROACHING); return true; }
         }
         if (ac.state === AircraftState.HOLDING_GROUND && ac.assignedRunway) {
             const rw = this.getRunway(ac.assignedRunway);
