@@ -1,1 +1,6 @@
 .git-backup/
+.env
+.venv/
+__pycache__/
+*.pyc
+outputs/

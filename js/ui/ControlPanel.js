@@ -118,6 +118,12 @@ export class ControlPanel {
         // Setup Ollama connect button
         const ollamaBtn = document.getElementById('btn-connect-ollama');
         if (ollamaBtn) ollamaBtn.addEventListener('click', () => this._connectOllama());
+
+        // Keep button in sync with engine state changes
+        this.engine.on('started', () => this._updatePlayButton());
+        this.engine.on('paused', () => this._updatePlayButton());
+        this.engine.on('resumed', () => this._updatePlayButton());
+        this.engine.on('reset', () => this._updatePlayButton());
     }
 
     async _connectOllama() {
