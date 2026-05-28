@@ -14,6 +14,7 @@ import { OpenAIProvider } from '../ai/OpenAIProvider.js';
 import { AnthropicProvider } from '../ai/AnthropicProvider.js';
 import { GeminiProvider } from '../ai/GeminiProvider.js';
 import { OllamaProvider } from '../ai/OllamaProvider.js';
+import { AzureAIProvider } from '../ai/AzureAIProvider.js';
 import Config from '../utils/Config.js';
 import { EventEmitter } from '../utils/helpers.js';
 
@@ -123,7 +124,7 @@ export class SimulationEngine extends EventEmitter {
         return false;
     }
 
-    setupLLMProvider(type, apiKey, model) {
+    setupLLMProvider(type, apiKey, model, endpoint) {
         let provider;
         switch (type) {
             case 'openai':
@@ -145,6 +146,10 @@ export class SimulationEngine extends EventEmitter {
             case 'lmstudio':
                 provider = new OpenAIProvider('lm-studio', model || 'local-model', 'http://localhost:1234/v1');
                 this.registerProvider('lmstudio', provider);
+                break;
+            case 'azure-ai':
+                provider = new AzureAIProvider(endpoint, apiKey, model || 'gpt-4o');
+                this.registerProvider('azure-ai', provider);
                 break;
         }
         return provider;
@@ -276,7 +281,16 @@ export class SimulationEngine extends EventEmitter {
     }
 
     _applyDecision(decision) {
-        const { aircraftId, action, parameters } = decision;
+        const { action, parameters } = decision;
+        let { aircraftId } = decision;
+
+        // LLMs typically return the callsign (e.g. "DAL7713") since that's what
+        // the prompt displays. Resolve it to the internal UUID if needed.
+        if (aircraftId && !this.stateManager.getAircraft(aircraftId)) {
+            const byCallsign = this.stateManager.getAircraftByCallsign(aircraftId);
+            if (byCallsign) aircraftId = byCallsign.id;
+        }
+
         let success = false;
 
         switch (action) {

@@ -50,6 +50,15 @@ async function init() {
         }
     });
 
+    // Restore Azure AI Foundry config
+    const azureKey = localStorage.getItem('apikey_azure-ai');
+    const azureEndpoint = localStorage.getItem('azure_ai_endpoint');
+    if (azureKey && azureEndpoint) {
+        const azureDeployment = localStorage.getItem('azure_ai_deployment') || 'gpt-4o';
+        engine.setupLLMProvider('azure-ai', azureKey, azureDeployment, azureEndpoint);
+        console.log('[Main] Restored Azure AI Foundry config');
+    }
+
     // Auto-start the simulation
     engine.start();
     console.log('[Main] Simulation started');

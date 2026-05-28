@@ -53,19 +53,34 @@ export class ControlPanel {
         // AI Provider selector
         document.getElementById('ai-provider').addEventListener('change', (e) => {
             const key = e.target.value;
+
+            // Hide all provider-specific config sections first
+            const ollamaSection = document.getElementById('ollama-config-section');
+            const azureSection = document.getElementById('azure-ai-config-section');
+            const apiSection = document.getElementById('api-key-section');
+            if (ollamaSection) ollamaSection.style.display = 'none';
+            if (azureSection) azureSection.style.display = 'none';
+            if (apiSection) apiSection.style.display = 'none';
+
             if (key === 'ollama') {
-                // Ollama uses host URL instead of API key
-                const ollamaSection = document.getElementById('ollama-config-section');
-                const apiSection = document.getElementById('api-key-section');
-                if (apiSection) apiSection.style.display = 'none';
                 if (ollamaSection) ollamaSection.style.display = 'block';
-                // Try connecting with default host
                 this._connectOllama();
                 return;
             }
-            // Hide ollama section when switching away
-            const ollamaSection = document.getElementById('ollama-config-section');
-            if (ollamaSection) ollamaSection.style.display = 'none';
+            if (key === 'azure-ai') {
+                if (azureSection) azureSection.style.display = 'block';
+                // Restore saved values
+                const savedEndpoint = localStorage.getItem('azure_ai_endpoint') || '';
+                const savedKey = localStorage.getItem('apikey_azure-ai') || '';
+                const savedDeployment = localStorage.getItem('azure_ai_deployment') || '';
+                const endpointInput = document.getElementById('azure-ai-endpoint');
+                const keyInput = document.getElementById('azure-ai-key');
+                const deployInput = document.getElementById('azure-ai-deployment');
+                if (endpointInput && savedEndpoint) endpointInput.value = savedEndpoint;
+                if (keyInput && savedKey) keyInput.value = savedKey;
+                if (deployInput && savedDeployment) deployInput.value = savedDeployment;
+                return;
+            }
 
             if (key === 'openai' || key === 'anthropic' || key === 'gemini') {
                 const apiKey = localStorage.getItem(`apikey_${key}`) || '';
@@ -119,11 +134,38 @@ export class ControlPanel {
         const ollamaBtn = document.getElementById('btn-connect-ollama');
         if (ollamaBtn) ollamaBtn.addEventListener('click', () => this._connectOllama());
 
+        // Setup Azure AI Foundry connect button
+        const azureBtn = document.getElementById('btn-connect-azure-ai');
+        if (azureBtn) azureBtn.addEventListener('click', () => this._connectAzureAI());
+
         // Keep button in sync with engine state changes
         this.engine.on('started', () => this._updatePlayButton());
         this.engine.on('paused', () => this._updatePlayButton());
         this.engine.on('resumed', () => this._updatePlayButton());
         this.engine.on('reset', () => this._updatePlayButton());
+    }
+
+    _connectAzureAI() {
+        const endpoint = document.getElementById('azure-ai-endpoint')?.value?.trim();
+        const apiKey = document.getElementById('azure-ai-key')?.value?.trim();
+        const deployment = document.getElementById('azure-ai-deployment')?.value?.trim() || 'gpt-4o';
+        const statusEl = document.getElementById('azure-ai-status');
+
+        if (!endpoint || !apiKey) {
+            if (statusEl) statusEl.textContent = '⚠️ Endpoint and API key are required';
+            return;
+        }
+
+        // Persist config
+        localStorage.setItem('azure_ai_endpoint', endpoint);
+        localStorage.setItem('apikey_azure-ai', apiKey);
+        localStorage.setItem('azure_ai_deployment', deployment);
+
+        // Setup provider
+        this.engine.setupLLMProvider('azure-ai', apiKey, deployment, endpoint);
+        this.engine.setProvider('azure-ai');
+
+        if (statusEl) statusEl.textContent = `✅ Connected — ${deployment}`;
     }
 
     async _connectOllama() {

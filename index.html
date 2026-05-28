@@ -20,7 +20,7 @@
             <!-- Header -->
             <div id="header">
                 <h1>✈ ATC SIMULATION</h1>
-                <div class="subtitle">LLM Performance Testing Environment</div>
+                <div class="subtitle">LLM Decision Testing Environment</div>
             </div>
 
             <!-- Tabs -->
@@ -63,6 +63,7 @@
                             <option value="openai">🟢 OpenAI GPT-4o</option>
                             <option value="anthropic">🟣 Anthropic Claude</option>
                             <option value="gemini">🔵 Google Gemini</option>
+                            <option value="azure-ai">🔷 Azure AI Foundry</option>
                         </select>
                         <div id="api-key-section">
                             <input type="password" id="api-key-input" placeholder="Enter API key..." data-provider="">
@@ -73,6 +74,13 @@
                             <select id="ollama-model-select" style="display:none; margin-top:6px"></select>
                             <button id="btn-connect-ollama" class="control-btn primary" style="width:100%; margin-top:6px">Connect</button>
                             <div id="ollama-status" class="ollama-status"></div>
+                        </div>
+                        <div id="azure-ai-config-section" style="display:none">
+                            <input type="text" id="azure-ai-endpoint" placeholder="https://your-resource.services.ai.azure.com" style="margin-bottom:6px">
+                            <input type="password" id="azure-ai-key" placeholder="Enter API key..." style="margin-bottom:6px">
+                            <input type="text" id="azure-ai-deployment" placeholder="Deployment name (e.g. gpt-4o)" style="margin-bottom:6px">
+                            <button id="btn-connect-azure-ai" class="control-btn primary" style="width:100%">Connect</button>
+                            <div id="azure-ai-status" class="ollama-status"></div>
                         </div>
                     </div>
 
