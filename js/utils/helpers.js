@@ -2,6 +2,22 @@
 // helpers.js — Utility functions for the ATC Simulation
 // ============================================================================
 
+export const STATE_COLORS = {
+    approaching: '#00e5ff',
+    holding_air: '#ffc107',
+    landing: '#76ff03',
+    go_around: '#ff6d00',
+    landed: '#8bc34a',
+    taxiing_to_gate: '#ff9800',
+    boarding: '#f48fb1',
+    at_gate: '#9e9e9e',
+    taxiing_to_runway: '#ff9800',
+    holding_ground: '#ffc107',
+    takeoff: '#e040fb',
+    departing: '#7c4dff',
+    removed: '#444'
+};
+
 export function distance(a, b) {
     const dx = a.x - b.x;
     const dy = a.y - b.y;
@@ -75,6 +91,9 @@ export function generateCallsign() {
         callsign = `${airline.code}${number}`;
         attempts++;
     } while (usedCallsigns.has(callsign) && attempts < 100);
+    if (usedCallsigns.has(callsign)) {
+        console.warn('[Callsign] Could not generate unique callsign after 100 attempts');
+    }
     usedCallsigns.add(callsign);
     return callsign;
 }

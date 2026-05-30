@@ -16,10 +16,12 @@ export class FlightScheduler extends EventEmitter {
         this.spawnEnabled = true;
         this.totalSpawned = 0;
         this._sectorIndex = 0;
+        this._currentSimTime = 0;
     }
 
     update(deltaTime, now) {
         if (!this.spawnEnabled) return;
+        this._currentSimTime = now;
 
         const maxActive = Config.get('aircraft.max_active', 15);
         const activeCount = this.stateManager.getActiveAircraft().length;
@@ -65,6 +67,6 @@ export class FlightScheduler extends EventEmitter {
 
     setSpawnEnabled(enabled) { this.spawnEnabled = enabled; }
     getStats() {
-        return { totalSpawned: this.totalSpawned, spawnEnabled: this.spawnEnabled, nextSpawnIn: Math.max(0, this.nextSpawnDelay - (Date.now() - this.lastSpawnTime)) };
+        return { totalSpawned: this.totalSpawned, spawnEnabled: this.spawnEnabled, nextSpawnIn: Math.max(0, this.nextSpawnDelay - (this._currentSimTime - this.lastSpawnTime)) };
     }
 }

@@ -2,7 +2,7 @@
 // ControlPanel.js — UI Controls & Dashboard
 // ============================================================================
 
-import { formatTime } from '../utils/helpers.js';
+import { formatTime, STATE_COLORS } from '../utils/helpers.js';
 
 export class ControlPanel {
     constructor(engine) {
@@ -210,7 +210,12 @@ export class ControlPanel {
     update(engine) {
         // Only update visible tab to save DOM thrash
         this._updateMetrics(engine);
-        this._updateAircraftList(engine);
+        // Throttle aircraft list to avoid 60fps DOM thrashing
+        const now = performance.now();
+        if (now - (this._lastAircraftListUpdate || 0) > 500) {
+            this._lastAircraftListUpdate = now;
+            this._updateAircraftList(engine);
+        }
     }
 
     _updateMetrics(engine) {
@@ -303,14 +308,7 @@ export class ControlPanel {
     }
 
     _getStateColor(state) {
-        const colors = {
-            approaching: '#00e5ff', holding_air: '#ffc107', landing: '#76ff03',
-            go_around: '#ff6d00', landed: '#8bc34a', taxiing_to_gate: '#ff9800',
-            boarding: '#f48fb1', at_gate: '#9e9e9e',
-            taxiing_to_runway: '#ff9800', holding_ground: '#ffc107',
-            takeoff: '#e040fb', departing: '#7c4dff'
-        };
-        return colors[state] || '#666';
+        return STATE_COLORS[state] || '#666';
     }
 
     _addDecisionEntry(d) {

@@ -13,26 +13,19 @@ export class OpenAIProvider extends LLMAdapter {
 
     async getDecisions(state) {
         if (!this.apiKey) return [];
-        const start = performance.now();
-        try {
-            const resp = await fetch(this.endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.apiKey}` },
-                body: JSON.stringify({
-                    model: this.modelId, temperature: 0.3, max_tokens: 2000,
-                    messages: [
-                        { role: 'system', content: this._buildSystemPrompt() },
-                        { role: 'user', content: this._buildUserPrompt(state) }
-                    ]
-                })
-            });
-            const data = await resp.json();
-            this._trackResponseTime(performance.now() - start);
-            if (data.choices?.[0]?.message?.content) {
-                if (data.usage) this.totalTokens += data.usage.total_tokens;
-                return this._parseResponse(data.choices[0].message.content);
-            }
-            return [];
-        } catch (e) { console.error('[OpenAI] Error:', e); this._trackResponseTime(performance.now() - start); return []; }
+        return this._callLLM('[OpenAI]', this.endpoint,
+            { 'Authorization': `Bearer ${this.apiKey}` },
+            {
+                model: this.modelId, temperature: 0.3, max_tokens: 2000,
+                messages: [
+                    { role: 'system', content: this._buildSystemPrompt() },
+                    { role: 'user', content: this._buildUserPrompt(state) }
+                ]
+            },
+            data => ({
+                text: data.choices?.[0]?.message?.content,
+                tokens: data.usage?.total_tokens || 0
+            })
+        );
     }
 }

@@ -4,23 +4,7 @@
 
 import { AircraftState } from '../models/Aircraft.js';
 import Config from '../utils/Config.js';
-import { lerp, distance } from '../utils/helpers.js';
-
-const STATE_COLORS = {
-    approaching: '#00e5ff',
-    holding_air: '#ffc107',
-    landing: '#76ff03',
-    go_around: '#ff6d00',
-    landed: '#8bc34a',
-    taxiing_to_gate: '#ff9800',
-    boarding: '#f48fb1',
-    at_gate: '#9e9e9e',
-    taxiing_to_runway: '#ff9800',
-    holding_ground: '#ffc107',
-    takeoff: '#e040fb',
-    departing: '#7c4dff',
-    removed: '#444'
-};
+import { lerp, distance, STATE_COLORS } from '../utils/helpers.js';
 
 export class Renderer {
     constructor(canvas) {
@@ -181,11 +165,7 @@ export class Renderer {
     }
 
     _drawCollisionZones(ctx, collisionSystem) {
-        for (const [, warning] of collisionSystem.activeWarnings) {
-            const a = warning.aircraftA;
-            const b = warning.aircraftB;
-            // We don't have position here, so we skip visual — handled per-aircraft
-        }
+        // Collision visuals handled per-aircraft in _drawAircraft
     }
 
     _drawTrails(ctx, aircraft) {

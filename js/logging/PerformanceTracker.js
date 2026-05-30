@@ -7,7 +7,8 @@ import { EventEmitter } from '../utils/helpers.js';
 export class PerformanceTracker extends EventEmitter {
     constructor() {
         super();
-        this.startTime = Date.now();
+        this.startTime = 0;  // Will be set to simulation time on first snapshot
+        this._wallClockStart = Date.now();
         this.landings = 0;
         this.departures = 0;
         this.crashes = 0;
@@ -48,6 +49,7 @@ export class PerformanceTracker extends EventEmitter {
     }
 
     takeSnapshot(now) {
+        if (this.startTime === 0) this.startTime = now;
         if (now - this._lastSnapshotTime < 2000) return;
         this._lastSnapshotTime = now;
         this._history.push({
@@ -60,7 +62,7 @@ export class PerformanceTracker extends EventEmitter {
         if (this._history.length > 300) this._history.shift();
     }
 
-    getElapsedMinutes() { return (Date.now() - this.startTime) / 60000; }
+    getElapsedMinutes() { return (Date.now() - this._wallClockStart) / 60000; }
 
     getThroughput() {
         const mins = Math.max(1, this.getElapsedMinutes());
@@ -102,7 +104,8 @@ export class PerformanceTracker extends EventEmitter {
     getHistory() { return [...this._history]; }
 
     reset() {
-        this.startTime = Date.now();
+        this.startTime = 0;
+        this._wallClockStart = Date.now();
         this.landings = this.departures = this.crashes = this.goArounds = 0;
         this.fuelEmergencies = this.nearMisses = 0;
         this.totalFuelAtLanding = 0;

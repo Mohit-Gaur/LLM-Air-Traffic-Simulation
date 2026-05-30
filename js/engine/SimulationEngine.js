@@ -335,7 +335,7 @@ export class SimulationEngine extends EventEmitter {
             }
             case 'EXPEDITE': {
                 const ac = this.stateManager.getAircraft(aircraftId);
-                if (ac) { ac.speed *= 1.3; success = true; }
+                if (ac) { ac.speedMultiplier = (ac.speedMultiplier || 1.0) * 1.3; success = true; }
                 break;
             }
         }

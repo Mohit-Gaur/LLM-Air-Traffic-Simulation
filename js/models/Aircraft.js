@@ -269,6 +269,9 @@ export class Aircraft {
     _moveToTarget(dt, maxSpeed) {
         if (this.targetX === null || this.targetY === null) return;
 
+        // Apply speed multiplier (from EXPEDITE action)
+        const effectiveMaxSpeed = maxSpeed * (this.speedMultiplier || 1.0);
+
         const target = { x: this.targetX, y: this.targetY };
         const dist = distance(this, target);
 
@@ -283,7 +286,7 @@ export class Aircraft {
         this.heading = lerpAngle(this.heading, targetAngle, dt * 3);
 
         // Slow down as we approach
-        const approachSpeed = Math.min(maxSpeed, dist * 0.05 + 0.5);
+        const approachSpeed = Math.min(effectiveMaxSpeed, dist * 0.05 + 0.5);
         this.speed = lerp(this.speed, approachSpeed, dt * 2);
 
         this.x += Math.cos(this.heading) * this.speed * dt * 60;

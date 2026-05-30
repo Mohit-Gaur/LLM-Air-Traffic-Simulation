@@ -60,49 +60,22 @@ export class OllamaProvider extends LLMAdapter {
 
     async getDecisions(state) {
         if (!this._connected) return [];
-        const start = performance.now();
-
-        try {
-            const systemPrompt = this._buildSystemPrompt();
-            const userPrompt = this._buildUserPrompt(state);
-
-            const resp = await fetch(`${this.host}/api/chat`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: this.model,
-                    messages: [
-                        { role: 'system', content: systemPrompt },
-                        { role: 'user', content: userPrompt }
-                    ],
-                    stream: false,
-                    options: {
-                        temperature: 0.3,
-                        top_p: 0.9,
-                        num_predict: 2000
-                    }
-                }),
-                signal: AbortSignal.timeout(30000)
-            });
-
-            if (!resp.ok) {
-                console.error(`[Ollama] HTTP ${resp.status}: ${resp.statusText}`);
-                this._trackResponseTime(performance.now() - start);
-                return [];
-            }
-
-            const data = await resp.json();
-            this._trackResponseTime(performance.now() - start);
-
-            const content = data.message?.content || data.response || '';
-            if (content) {
-                return this._parseResponse(content);
-            }
-            return [];
-        } catch (e) {
-            console.error('[Ollama] Error:', e);
-            this._trackResponseTime(performance.now() - start);
-            return [];
-        }
+        return this._callLLM('[Ollama]', `${this.host}/api/chat`,
+            {},
+            {
+                model: this.model,
+                messages: [
+                    { role: 'system', content: this._buildSystemPrompt() },
+                    { role: 'user', content: this._buildUserPrompt(state) }
+                ],
+                stream: false,
+                options: { temperature: 0.3, top_p: 0.9, num_predict: 2000 }
+            },
+            data => ({
+                text: data.message?.content || data.response || '',
+                tokens: 0
+            }),
+            { signal: AbortSignal.timeout(30000) }
+        );
     }
 }

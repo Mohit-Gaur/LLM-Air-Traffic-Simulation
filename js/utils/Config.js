@@ -87,19 +87,21 @@ class ConfigManager {
                 terminal: { x: 50, y: 220, width: 120, height: 420 }
             },
             aircraft: {
-                spawn_rate: { min: 4000, max: 9000 },
-                max_active: 15,
+                spawn_rate: { min: 5000, max: 12000 },
+                max_active: 12,
                 types: [
-                    { name: "A320", weight: 40, size: 18, maxSpeed: 4, color: "#00e5ff" },
-                    { name: "B737", weight: 35, size: 16, maxSpeed: 4.2, color: "#76ff03" },
-                    { name: "B777", weight: 15, size: 22, maxSpeed: 3.5, color: "#ffab00" },
-                    { name: "A380", weight: 10, size: 26, maxSpeed: 3.0, color: "#e040fb" }
+                    { name: "A320", weight: 30, size: 18, maxSpeed: 4, color: "#00e5ff", engines: "twin-jet" },
+                    { name: "B737", weight: 28, size: 16, maxSpeed: 4.2, color: "#76ff03", engines: "twin-jet" },
+                    { name: "B777", weight: 15, size: 22, maxSpeed: 3.5, color: "#ffab00", engines: "twin-jet" },
+                    { name: "A380", weight: 10, size: 26, maxSpeed: 3.0, color: "#e040fb", engines: "quad-jet" },
+                    { name: "ATR72", weight: 17, size: 15, maxSpeed: 3.2, color: "#80deea", engines: "turboprop" }
                 ],
                 fuel: {
                     initial_min: 40, initial_max: 100,
                     consumption: {
                         approaching: 0.12, holding_air: 0.20, landing: 0.10,
-                        landed: 0.02, taxiing_to_gate: 0.05, at_gate: 0.01,
+                        go_around: 0.25, landed: 0.02, taxiing_to_gate: 0.05,
+                        boarding: 0.00, at_gate: 0.01,
                         taxiing_to_runway: 0.05, holding_ground: 0.03,
                         takeoff: 0.30, departing: 0.15, removed: 0.00
                     },
@@ -108,9 +110,9 @@ class ConfigManager {
                 }
             },
             collision: {
-                warning_distance: 500, avoidance_distance: 200,
-                emergency_distance: 100, crash_distance: 10,
-                avoidance_force: 2.0, emergency_force: 5.0
+                warning_distance: 400, avoidance_distance: 150,
+                emergency_distance: 80, crash_distance: 15,
+                avoidance_force: 4.0, emergency_force: 8.0
             },
             simulation: {
                 default_speed: 1, speeds: [0.5, 1, 2, 5],

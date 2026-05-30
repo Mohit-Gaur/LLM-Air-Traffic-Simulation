@@ -146,14 +146,59 @@ If no action is needed, respond with an empty array: []`;
             let json = responseText.trim();
             const match = json.match(/```(?:json)?\s*([\s\S]*?)```/);
             if (match) json = match[1].trim();
-            // Try to find array
-            const arrMatch = json.match(/\[[\s\S]*\]/);
-            if (arrMatch) json = arrMatch[0];
+            // Find the first balanced JSON array using bracket counting
+            const startIdx = json.indexOf('[');
+            if (startIdx !== -1) {
+                let depth = 0;
+                for (let i = startIdx; i < json.length; i++) {
+                    if (json[i] === '[') depth++;
+                    else if (json[i] === ']') depth--;
+                    if (depth === 0) { json = json.substring(startIdx, i + 1); break; }
+                }
+            }
             const decisions = JSON.parse(json);
             if (!Array.isArray(decisions)) return [];
             return decisions.filter(d => d.aircraftId && d.action);
         } catch (e) {
             console.warn('[LLM] Failed to parse response:', e.message);
+            return [];
+        }
+    }
+
+    /**
+     * Template method for calling an LLM API with standard timing/error/parse logic.
+     * Subclasses provide: endpoint, headers, body, and a function to extract text from response JSON.
+     * @param {string} label - Provider label for error logging (e.g. '[OpenAI]')
+     * @param {string} endpoint - The API URL
+     * @param {object} headers - Request headers
+     * @param {object} body - Request body (will be JSON-stringified)
+     * @param {function} extractContent - (data) => { text, tokens } extracts content text and token count
+     * @param {object} [fetchOptions] - Additional fetch options (e.g. signal)
+     */
+    async _callLLM(label, endpoint, headers, body, extractContent, fetchOptions = {}) {
+        const start = performance.now();
+        try {
+            const resp = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...headers },
+                body: JSON.stringify(body),
+                ...fetchOptions
+            });
+            if (!resp.ok) {
+                const errData = await resp.json().catch(() => ({}));
+                console.error(`${label} HTTP ${resp.status}:`, errData.error?.message || resp.statusText);
+                this._trackResponseTime(performance.now() - start);
+                return [];
+            }
+            const data = await resp.json();
+            this._trackResponseTime(performance.now() - start);
+            const result = extractContent(data);
+            if (result?.tokens) this.totalTokens += result.tokens;
+            if (result?.text) return this._parseResponse(result.text);
+            return [];
+        } catch (e) {
+            console.error(`${label} Error:`, e);
+            this._trackResponseTime(performance.now() - start);
             return [];
         }
     }

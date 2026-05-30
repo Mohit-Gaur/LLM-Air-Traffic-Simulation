@@ -80,13 +80,22 @@ export class FuelSystem extends EventEmitter {
                 this.emit('emergency_runway_assigned', { aircraft: ac, runway: nearest });
             }
 
-            // If in holding, clear it
+            // If in holding, transition to approaching so clearHold works
             if (ac.state === AircraftState.HOLDING_AIR) {
-                this.stateManager.clearHold(ac.id);
+                if (ac.assignedRunway) {
+                    // Set target and state to APPROACHING so the aircraft flies to the runway
+                    const rw = this.stateManager.getRunway(ac.assignedRunway);
+                    if (rw) {
+                        ac.setTarget(rw.x + rw.length, rw.y);
+                        ac.setState(AircraftState.APPROACHING);
+                    }
+                } else {
+                    this.stateManager.clearHold(ac.id);
+                }
             }
 
             // Request runway clearing if all occupied
-            if (freeRunways.length === 0) {
+            if (freeRunways.length === 0 && !ac.assignedRunway) {
                 this.emit('runway_clearing_requested', ac);
                 this._requestRunwayClearing(ac);
             }
@@ -103,6 +112,11 @@ export class FuelSystem extends EventEmitter {
                     rw.occupied = false;
                     rw.occupiedBy = null;
                     this.stateManager.assignRunway(emergencyAc.id, rw.id);
+                    // Transition emergency aircraft to approach the cleared runway
+                    if (emergencyAc.state === AircraftState.HOLDING_AIR) {
+                        emergencyAc.setTarget(rw.x + rw.length, rw.y);
+                        emergencyAc.setState(AircraftState.APPROACHING);
+                    }
                     this.emit('runway_cleared', { runway: rw, cleared: occupant, forAircraft: emergencyAc });
                     return;
                 }

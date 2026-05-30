@@ -21,7 +21,6 @@ async function init() {
         canvas.height = simArea.clientHeight;
     }
     resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
 
     // Create engine
     const engine = new SimulationEngine();
@@ -31,9 +30,9 @@ async function init() {
     const renderer = new Renderer(canvas);
     engine.renderer = renderer;
 
-    // Sync renderer size with canvas resize
-    const origResize = resizeCanvas;
+    // Sync canvas and renderer size on resize
     window.addEventListener('resize', () => {
+        resizeCanvas();
         renderer.resize(canvas.width, canvas.height);
     });
 

@@ -13,27 +13,21 @@ export class AnthropicProvider extends LLMAdapter {
 
     async getDecisions(state) {
         if (!this.apiKey) return [];
-        const start = performance.now();
-        try {
-            const resp = await fetch(this.endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json', 'x-api-key': this.apiKey,
-                    'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true'
-                },
-                body: JSON.stringify({
-                    model: this.modelId, max_tokens: 2000, temperature: 0.3,
-                    system: this._buildSystemPrompt(),
-                    messages: [{ role: 'user', content: this._buildUserPrompt(state) }]
-                })
-            });
-            const data = await resp.json();
-            this._trackResponseTime(performance.now() - start);
-            if (data.content?.[0]?.text) {
-                if (data.usage) this.totalTokens += (data.usage.input_tokens || 0) + (data.usage.output_tokens || 0);
-                return this._parseResponse(data.content[0].text);
-            }
-            return [];
-        } catch (e) { console.error('[Anthropic] Error:', e); this._trackResponseTime(performance.now() - start); return []; }
+        return this._callLLM('[Anthropic]', this.endpoint,
+            {
+                'x-api-key': this.apiKey,
+                'anthropic-version': '2023-06-01',
+                'anthropic-dangerous-direct-browser-access': 'true'
+            },
+            {
+                model: this.modelId, max_tokens: 2000, temperature: 0.3,
+                system: this._buildSystemPrompt(),
+                messages: [{ role: 'user', content: this._buildUserPrompt(state) }]
+            },
+            data => ({
+                text: data.content?.[0]?.text,
+                tokens: (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0)
+            })
+        );
     }
 }
