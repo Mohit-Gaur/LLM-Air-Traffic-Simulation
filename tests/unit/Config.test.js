@@ -2,10 +2,26 @@
 // Config.test.js — Tests for ConfigManager
 // ============================================================================
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, beforeAll, afterAll, vi } from 'vitest';
+
+// Unmock so this file exercises the real ConfigManager not the test double
+// registered in tests/setup.js. vi.unmock() is hoisted before the import below.
+vi.unmock('../../js/utils/Config.js');
+
 import Config from '../../js/utils/Config.js';
 
 describe('Config', () => {
+    beforeAll(async () => {
+        // Stub fetch to fail immediately so load() falls back to _getDefaults().
+        // This exercises the real constructor, load() and all instance methods.
+        vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('no network in tests')));
+        await Config.load();
+    });
+
+    afterAll(() => {
+        vi.unstubAllGlobals();
+    });
+
     beforeEach(() => {
         Config.clearOverrides();
     });

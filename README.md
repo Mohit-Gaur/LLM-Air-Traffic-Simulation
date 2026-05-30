@@ -134,7 +134,7 @@ Each state has specific fuel consumption rates, speed profiles and transition ru
 
 ### Built-in (No API Key Required)
 
-- **Rule-Based AI** - deterministic controller with priority-based decisions. Serves as baseline for LLM comparison.
+- **Rule Based** - deterministic controller with priority-based decisions. Serves as baseline for LLM comparison.
 
 ### LLM Providers (API Key Required)
 

@@ -119,7 +119,7 @@ describe('Integration: AI Decision Flow', () => {
 
         const recentDecisions = engine.logger.getRecentDecisions(10);
         expect(recentDecisions.length).toBeGreaterThanOrEqual(1);
-        expect(recentDecisions[0].provider).toBe('Rule-Based AI');
+        expect(recentDecisions[0].provider).toBe('Rule Based');
     });
 
     it('performance tracker records AI response time', async () => {
@@ -129,8 +129,8 @@ describe('Integration: AI Decision Flow', () => {
         await engine._requestAIDecisions();
 
         const stats = engine.perfTracker.providerStats;
-        expect(stats['Rule-Based AI']).toBeDefined();
-        expect(stats['Rule-Based AI'].decisions).toBe(1);
-        expect(stats['Rule-Based AI'].totalResponseTime).toBeGreaterThanOrEqual(0);
+        expect(stats['Rule Based']).toBeDefined();
+        expect(stats['Rule Based'].decisions).toBe(1);
+        expect(stats['Rule Based'].totalResponseTime).toBeGreaterThanOrEqual(0);
     });
 });

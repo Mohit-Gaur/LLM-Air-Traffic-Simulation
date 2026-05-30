@@ -7,7 +7,7 @@ import { AircraftState } from '../models/Aircraft.js';
 
 export class RuleBasedAI extends LLMAdapter {
     constructor() {
-        super('Rule-Based AI', 'rule-based-v1');
+        super('Rule Based', 'rule-based-v1');
     }
 
     async getDecisions(state) {

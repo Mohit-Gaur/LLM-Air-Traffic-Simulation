@@ -28,7 +28,7 @@ describe('SimulationEngine', () => {
         });
 
         it('starts with rule-based provider', () => {
-            expect(engine.currentProvider.getName()).toBe('Rule-Based AI');
+            expect(engine.currentProvider.getName()).toBe('Rule Based');
         });
 
         it('starts not running', () => {

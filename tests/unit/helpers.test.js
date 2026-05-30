@@ -118,13 +118,16 @@ describe('normalize()', () => {
 
 describe('generateCallsign() / releaseCallsign()', () => {
     it('generates unique callsigns', () => {
-        const callsigns = new Set();
+        const callsigns = [];
         for (let i = 0; i < 50; i++) {
-            const cs = generateCallsign();
-            callsigns.add(cs);
-            releaseCallsign(cs); // clean up to avoid pollution
+            callsigns.push(generateCallsign());
         }
-        expect(callsigns.size).toBe(50);
+        try {
+            expect(new Set(callsigns).size).toBe(50);
+        } finally {
+            // Release all reserved callsigns regardless of assertion outcome
+            callsigns.forEach(releaseCallsign);
+        }
     });
 
     it('follows airline code + number format', () => {
