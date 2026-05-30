@@ -17,7 +17,6 @@ export class PerformanceTracker extends EventEmitter {
         this.nearMisses = 0;
         this.totalFuelAtLanding = 0;
         this.landingTimes = [];       // ms from approaching to landed
-        this.departureTimes = [];     // ms from at_gate to departing
         this.providerStats = {};
         this._history = [];           // periodic snapshots
         this._lastSnapshotTime = 0;
@@ -109,7 +108,7 @@ export class PerformanceTracker extends EventEmitter {
         this.landings = this.departures = this.crashes = this.goArounds = 0;
         this.fuelEmergencies = this.nearMisses = 0;
         this.totalFuelAtLanding = 0;
-        this.landingTimes = []; this.departureTimes = [];
+        this.landingTimes = [];
         this.providerStats = {}; this._history = [];
     }
 }

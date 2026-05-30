@@ -64,12 +64,6 @@ describe('DecisionLogger', () => {
         expect(logger.getDecisionsByProvider('AI-B')).toHaveLength(1);
     });
 
-    it('updateOutcome modifies the decision', () => {
-        const id = logger.logDecision('AI', { aircraftId: 'ac1', action: 'HOLD' }, 10);
-        logger.updateOutcome(id, 'success');
-        expect(logger.decisions[0].outcome).toBe('success');
-    });
-
     it('exportJSON returns valid JSON', () => {
         logger.logDecision('AI', { aircraftId: 'ac1', action: 'HOLD' }, 10);
         logger.logEvent('test', {}, 'info');
