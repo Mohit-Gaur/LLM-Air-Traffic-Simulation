@@ -1,0 +1,26 @@
+{
+  "name": "project",
+  "version": "1.0.0",
+  "description": "A sophisticated airport simulation designed for testing and comparing Large Language Models (LLMs) in complex, real-time air traffic control scenarios. This project provides a controlled environment to evaluate how various AI systems handle safety-critical decision making, resource allocation and emergency management in aviation operations.",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mohit-Gaur/LLM-Air-Traffic-Simulation.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Mohit-Gaur/LLM-Air-Traffic-Simulation/issues"
+  },
+  "homepage": "https://github.com/Mohit-Gaur/LLM-Air-Traffic-Simulation#readme",
+  "devDependencies": {
+    "vitest": "^2.1.9"
+  }
+}

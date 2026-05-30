@@ -167,7 +167,7 @@ If no action is needed, respond with an empty array: []`;
 
     /**
      * Template method for calling an LLM API with standard timing/error/parse logic.
-     * Subclasses provide: endpoint, headers, body, and a function to extract text from response JSON.
+     * Subclasses provide: endpoint, headers, body and a function to extract text from response JSON.
      * @param {string} label - Provider label for error logging (e.g. '[OpenAI]')
      * @param {string} endpoint - The API URL
      * @param {object} headers - Request headers

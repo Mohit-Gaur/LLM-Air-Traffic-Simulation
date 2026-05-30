@@ -1,6 +1,6 @@
 # ✈ LLM Air Traffic Control Simulation
 
-A sophisticated airport simulation designed for testing and comparing Large Language Models (LLMs) in complex, real-time air traffic control scenarios. This project provides a controlled environment to evaluate how various AI systems handle safety-critical decision making, resource allocation, and emergency management in aviation operations.
+A sophisticated airport simulation designed for testing and comparing Large Language Models (LLMs) in complex, real-time air traffic control scenarios. This project provides a controlled environment to evaluate how various AI systems handle safety-critical decision making, resource allocation and emergency management in aviation operations.
 
 ![Simulation Preview](https://img.shields.io/badge/Status-Active-00e676?style=flat-square) ![License](https://img.shields.io/badge/License-MIT-00e5ff?style=flat-square) ![No Build](https://img.shields.io/badge/Build-None_Required-76ff03?style=flat-square)
 
@@ -111,7 +111,7 @@ APPROACHING → HOLDING_AIR → LANDING → LANDED → TAXIING_TO_GATE →
         TAKEOFF → DEPARTING → REMOVED
 ```
 
-Each state has specific fuel consumption rates, speed profiles, and transition rules.
+Each state has specific fuel consumption rates, speed profiles and transition rules.
 
 ## Collision Prevention (4 Layers)
 
@@ -207,6 +207,50 @@ ai:
   timeout: 10000                          # max wait for AI response
 ```
 
+## Testing
+
+The project includes a comprehensive test suite built with [Vitest](https://vitest.dev/), covering all backend engine logic, AI decision making and logging modules (**251 tests across 13 files**).
+
+```bash
+# Install dependencies
+npm install
+
+# Run full test suite
+npm test
+
+# Watch mode (re-runs on file changes)
+npm run test:watch
+
+# Run unit or integration tests separately
+npm run test:unit
+npm run test:integration
+```
+
+### Test Structure
+
+```
+tests/
+├── setup.js                          # Config mock (no fetch/YAML needed)
+├── helpers/testFactories.js          # Aircraft & snapshot factories
+├── unit/
+│   ├── helpers.test.js               # Math, callsigns, EventEmitter
+│   ├── Config.test.js                # Config path traversal & overrides
+│   ├── Aircraft.test.js              # State machine, movement, status queries
+│   ├── StateManager.test.js          # Runway/gate assignment, transitions
+│   ├── CollisionSystem.test.js       # 4-layer thresholds, exclusion rules
+│   ├── FuelSystem.test.js            # Consumption, emergencies, runway clearing
+│   ├── FlightScheduler.test.js       # Spawn timing, congestion, sectors
+│   ├── SimulationEngine.test.js      # Decision routing, event wiring
+│   ├── AI.test.js                    # LLM response parsing, RuleBasedAI logic
+│   └── Logging.test.js               # DecisionLogger, CrashAnalyzer, metrics
+└── integration/
+    ├── aircraft-lifecycle.test.js     # Full approach → land → depart lifecycle
+    ├── fuel-crash-pipeline.test.js    # Fuel depletion → crash event chain
+    └── ai-decision-flow.test.js      # End-to-end AI decision pipeline
+```
+
+> **Note:** Tests run in Node.js without any browser dependencies — no jsdom or DOM mocking required. The Config singleton is mocked in `tests/setup.js` to provide default values without needing `fetch` or `js-yaml`.
+
 ## Controls
 
 | Control | Action |
@@ -237,4 +281,4 @@ ai:
 
 ## License
 
-MIT License - use freely for research, education, and AI evaluation.
+MIT License - use freely for research, education and AI evaluation.

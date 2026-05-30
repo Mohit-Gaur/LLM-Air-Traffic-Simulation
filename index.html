@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Airport simulation for testing and comparing LLM performance in air traffic control scenarios. Evaluate AI safety, efficiency, and decision-making.">
+    <meta name="description"
+        content="Airport simulation for testing and comparing LLM performance in air traffic control scenarios. Evaluate AI safety, efficiency and decision-making.">
     <title>LLM ATC Simulation — Air Traffic Control AI Testing</title>
     <link rel="stylesheet" href="css/index.css?v=2">
     <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
 </head>
+
 <body>
     <div id="app">
         <!-- Simulation Canvas -->
@@ -29,7 +32,8 @@
                 <button class="tab-btn" data-tab="aircraft">Aircraft</button>
                 <button class="tab-btn" data-tab="decisions">Decisions</button>
                 <button class="tab-btn" data-tab="metrics">Metrics</button>
-                <button class="tab-btn" data-tab="crashes">Crashes <span id="crash-badge" class="badge" style="display:none">0</span></button>
+                <button class="tab-btn" data-tab="crashes">Crashes <span id="crash-badge" class="badge"
+                        style="display:none">0</span></button>
             </div>
 
             <!-- Tab Content -->
@@ -67,19 +71,26 @@
                         </select>
                         <div id="api-key-section">
                             <input type="password" id="api-key-input" placeholder="Enter API key..." data-provider="">
-                            <button id="btn-save-key" class="control-btn primary" style="width:100%">Save & Activate</button>
+                            <button id="btn-save-key" class="control-btn primary" style="width:100%">Save &
+                                Activate</button>
                         </div>
                         <div id="ollama-config-section" style="display:none">
-                            <input type="text" id="ollama-host" placeholder="http://localhost:11434" value="http://localhost:11434">
+                            <input type="text" id="ollama-host" placeholder="http://localhost:11434"
+                                value="http://localhost:11434">
                             <select id="ollama-model-select" style="display:none; margin-top:6px"></select>
-                            <button id="btn-connect-ollama" class="control-btn primary" style="width:100%; margin-top:6px">Connect</button>
+                            <button id="btn-connect-ollama" class="control-btn primary"
+                                style="width:100%; margin-top:6px">Connect</button>
                             <div id="ollama-status" class="ollama-status"></div>
                         </div>
                         <div id="azure-ai-config-section" style="display:none">
-                            <input type="text" id="azure-ai-endpoint" placeholder="https://your-resource.services.ai.azure.com" style="margin-bottom:6px">
-                            <input type="password" id="azure-ai-key" placeholder="Enter API key..." style="margin-bottom:6px">
-                            <input type="text" id="azure-ai-deployment" placeholder="Deployment name (e.g. gpt-4o)" style="margin-bottom:6px">
-                            <button id="btn-connect-azure-ai" class="control-btn primary" style="width:100%">Connect</button>
+                            <input type="text" id="azure-ai-endpoint"
+                                placeholder="https://your-resource.services.ai.azure.com" style="margin-bottom:6px">
+                            <input type="password" id="azure-ai-key" placeholder="Enter API key..."
+                                style="margin-bottom:6px">
+                            <input type="text" id="azure-ai-deployment" placeholder="Deployment name (e.g. gpt-4o)"
+                                style="margin-bottom:6px">
+                            <button id="btn-connect-azure-ai" class="control-btn primary"
+                                style="width:100%">Connect</button>
                             <div id="azure-ai-status" class="ollama-status"></div>
                         </div>
                     </div>
@@ -189,4 +200,5 @@
 
     <script type="module" src="js/main.js?v=3"></script>
 </body>
+
 </html>
