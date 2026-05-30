@@ -196,15 +196,15 @@ describe('Aircraft movement', () => {
     });
 
     it('speedMultiplier affects movement', () => {
-        const ac1 = createAircraft({ x: 0, y: 0 });
+        const ac1 = createAircraft({ x: 0, y: 0, maxSpeed: 4 });
         ac1.setTarget(500, 0);
         ac1.heading = 0;
-        const ac2 = createAircraft({ x: 0, y: 0 });
+        const ac2 = createAircraft({ x: 0, y: 0, maxSpeed: 4 });
         ac2.setTarget(500, 0);
         ac2.heading = 0;
         ac2.speedMultiplier = 2.0;
 
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 60; i++) {
             ac1.update(16);
             ac2.update(16);
         }
