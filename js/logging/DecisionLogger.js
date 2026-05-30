@@ -47,11 +47,6 @@ export class DecisionLogger extends EventEmitter {
         this.emit('event', entry);
     }
 
-    updateOutcome(decisionId, outcome) {
-        const d = this.decisions.find(d => d.id === decisionId);
-        if (d) d.outcome = outcome;
-    }
-
     getRecentDecisions(count = 20) { return this.decisions.slice(-count); }
     getRecentEvents(count = 20) { return this.events.slice(-count); }
     getDecisionsByProvider(provider) { return this.decisions.filter(d => d.provider === provider); }

@@ -89,22 +89,26 @@ export class CollisionSystem extends EventEmitter {
         }
     }
 
-    _handleSmartAvoidance(a, b, dist, force) {
+    _computeAvoidanceVectors(a, b, dist, thresholdKey, force) {
         const dx = a.x - b.x, dy = a.y - b.y;
         const len = Math.sqrt(dx * dx + dy * dy) || 1;
-        const strength = force * (1 - dist / Config.get('collision.avoidance_distance', 200));
-        a.applyAvoidance({ x: (dx / len) * strength, y: (dy / len) * strength });
-        b.applyAvoidance({ x: -(dx / len) * strength, y: -(dy / len) * strength });
-        a.collisionAvoidanceActive = true;
-        b.collisionAvoidanceActive = true;
+        const threshold = Config.get(`collision.${thresholdKey}`, 200);
+        const strength = force * (1 - dist / threshold);
+        return {
+            nx: dx / len, ny: dy / len, strength
+        };
+    }
+
+    _handleSmartAvoidance(a, b, dist, force) {
+        const { nx, ny, strength } = this._computeAvoidanceVectors(a, b, dist, 'avoidance_distance', force);
+        a.applyAvoidance({ x: nx * strength, y: ny * strength });
+        b.applyAvoidance({ x: -nx * strength, y: -ny * strength });
     }
 
     _handleEmergencyAvoidance(a, b, dist, force) {
-        const dx = a.x - b.x, dy = a.y - b.y;
-        const len = Math.sqrt(dx * dx + dy * dy) || 1;
-        const strength = force * (1 - dist / Config.get('collision.emergency_distance', 100));
-        a.applyAvoidance({ x: (dx / len) * strength * 2, y: (dy / len) * strength * 2 });
-        b.applyAvoidance({ x: -(dx / len) * strength * 2, y: -(dy / len) * strength * 2 });
+        const { nx, ny, strength } = this._computeAvoidanceVectors(a, b, dist, 'emergency_distance', force);
+        a.applyAvoidance({ x: nx * strength * 2, y: ny * strength * 2 });
+        b.applyAvoidance({ x: -nx * strength * 2, y: -ny * strength * 2 });
 
         // Speed adjustments
         if (a.speed > b.speed) { a.speed *= 0.95; } else { b.speed *= 0.95; }

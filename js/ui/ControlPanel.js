@@ -13,7 +13,13 @@ export class ControlPanel {
     }
 
     _init() {
-        // Tab switching
+        this._initTabs();
+        this._initSimulationControls();
+        this._initProviderConfig();
+        this._initEventListeners();
+    }
+
+    _initTabs() {
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -24,7 +30,9 @@ export class ControlPanel {
                 this._activeTab = tab;
             });
         });
+    }
 
+    _initSimulationControls() {
         // Play/Pause
         document.getElementById('btn-play').addEventListener('click', () => {
             if (!this.engine.running) this.engine.start();
@@ -50,7 +58,26 @@ export class ControlPanel {
             });
         });
 
-        // AI Provider selector
+        // Spawn toggle
+        document.getElementById('btn-toggle-spawn').addEventListener('click', () => {
+            const enabled = !this.engine.scheduler.spawnEnabled;
+            this.engine.scheduler.setSpawnEnabled(enabled);
+            document.getElementById('btn-toggle-spawn').textContent = enabled ? '✈ Spawning ON' : '✈ Spawning OFF';
+            document.getElementById('btn-toggle-spawn').classList.toggle('off', !enabled);
+        });
+
+        // Export logs
+        document.getElementById('btn-export').addEventListener('click', () => {
+            const data = this.engine.logger.exportJSON();
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `atc-log-${Date.now()}.json`; a.click();
+            URL.revokeObjectURL(url);
+        });
+    }
+
+    _initProviderConfig() {
         document.getElementById('ai-provider').addEventListener('change', (e) => {
             const key = e.target.value;
 
@@ -106,25 +133,9 @@ export class ControlPanel {
                 document.getElementById('api-key-input').value = '';
             }
         });
+    }
 
-        // Spawn toggle
-        document.getElementById('btn-toggle-spawn').addEventListener('click', () => {
-            const enabled = !this.engine.scheduler.spawnEnabled;
-            this.engine.scheduler.setSpawnEnabled(enabled);
-            document.getElementById('btn-toggle-spawn').textContent = enabled ? '✈ Spawning ON' : '✈ Spawning OFF';
-            document.getElementById('btn-toggle-spawn').classList.toggle('off', !enabled);
-        });
-
-        // Export logs
-        document.getElementById('btn-export').addEventListener('click', () => {
-            const data = this.engine.logger.exportJSON();
-            const blob = new Blob([data], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = `atc-log-${Date.now()}.json`; a.click();
-            URL.revokeObjectURL(url);
-        });
-
+    _initEventListeners() {
         // Listen for engine events
         this.engine.logger.on('decision', (d) => this._addDecisionEntry(d));
         this.engine.logger.on('event', (e) => this._addEventEntry(e));

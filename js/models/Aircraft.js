@@ -116,7 +116,6 @@ export class Aircraft {
         // Boarding time based on passengers: 3s base + 0.08s per pax (in ms)
         this.boardingDuration = 3000 + this.passengerCount * 80;
         // Gate operation = boarding + 5s turnaround buffer
-        this.gateOperationDuration = this.boardingDuration + 5000;
         this.boardingProgress = 0; // 0-1 fraction
         this.holdingAngle = Math.random() * Math.PI * 2;
         this.holdingRadius = randomRange(60, 100);
@@ -211,27 +210,13 @@ export class Aircraft {
                 this.speed = 0;
                 this.gateTimer += deltaTime;
                 this.boardingProgress = clamp(this.gateTimer / this.boardingDuration, 0, 1);
-                // Refueling happens in parallel during boarding
-                if (this.isRefueling && this.fuel < this.refuelTarget) {
-                    const refuelRate = Config.get('aircraft.fuel.refuel_rate', 0.5);
-                    this.fuel = Math.min(this.refuelTarget, this.fuel + refuelRate * dt);
-                    if (this.fuel >= this.refuelTarget) {
-                        this.isRefueling = false;
-                    }
-                }
+                this._handleRefueling(dt);
                 break;
 
             case AircraftState.AT_GATE:
                 this.speed = 0;
                 this.gateTimer += deltaTime;
-                // Continue refueling at gate if not done during boarding
-                if (this.isRefueling && this.fuel < this.refuelTarget) {
-                    const refuelRate = Config.get('aircraft.fuel.refuel_rate', 0.5);
-                    this.fuel = Math.min(this.refuelTarget, this.fuel + refuelRate * dt);
-                    if (this.fuel >= this.refuelTarget) {
-                        this.isRefueling = false;
-                    }
-                }
+                this._handleRefueling(dt);
                 break;
 
             case AircraftState.TAXIING_TO_RUNWAY:
@@ -291,6 +276,16 @@ export class Aircraft {
 
         this.x += Math.cos(this.heading) * this.speed * dt * 60;
         this.y += Math.sin(this.heading) * this.speed * dt * 60;
+    }
+
+    _handleRefueling(dt) {
+        if (this.isRefueling && this.fuel < this.refuelTarget) {
+            const refuelRate = Config.get('aircraft.fuel.refuel_rate', 0.5);
+            this.fuel = Math.min(this.refuelTarget, this.fuel + refuelRate * dt);
+            if (this.fuel >= this.refuelTarget) {
+                this.isRefueling = false;
+            }
+        }
     }
 
     _doHoldingPattern(dt) {
