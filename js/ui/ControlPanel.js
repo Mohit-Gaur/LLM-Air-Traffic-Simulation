@@ -219,13 +219,51 @@ export class ControlPanel {
     }
 
     update(engine) {
-        // Only update visible tab to save DOM thrash
-        this._updateMetrics(engine);
-        // Throttle aircraft list to avoid 60fps DOM thrashing
         const now = performance.now();
+
+        // Telemetry & metrics don't need 60fps — throttle to ~10Hz to keep
+        // the render loop smooth (avoids per-frame style/layout recalc).
+        if (now - (this._lastMetricsUpdate || 0) > 100) {
+            this._lastMetricsUpdate = now;
+            this._updateMetrics(engine);
+            this._updateTopbar(engine);
+        }
+
+        // Throttle aircraft list to avoid DOM thrashing
         if (now - (this._lastAircraftListUpdate || 0) > 500) {
             this._lastAircraftListUpdate = now;
             this._updateAircraftList(engine);
+        }
+    }
+
+    _updateTopbar(engine) {
+        const m = engine.perfTracker.getMetrics();
+        const set = (id, value, unit) => {
+            const e = document.getElementById(id);
+            if (e) e.innerHTML = `${value}<small>${unit}</small>`;
+        };
+        set('hud-clock', m.elapsed.toFixed(1), 'min');
+        set('hud-aircraft', engine.stateManager.getActiveAircraft().length, 'ac');
+        set('hud-throughput', m.throughput, '/min');
+        set('hud-safety', m.safetyScore, '%');
+        set('hud-fps', engine.fps, 'fps');
+
+        // Safety chip color
+        const safetyChip = document.getElementById('hud-safety');
+        if (safetyChip) {
+            safetyChip.style.color = m.safetyScore >= 90 ? '#36f5a0'
+                : m.safetyScore >= 70 ? '#ffc24b' : '#ff4d5e';
+        }
+
+        // Status pill
+        const status = document.getElementById('hud-status');
+        const statetext = document.getElementById('hud-statetext');
+        if (status && statetext) {
+            let state = 'run', label = 'RUNNING';
+            if (!engine.running) { state = 'stop'; label = 'STANDBY'; }
+            else if (engine.paused) { state = 'paused'; label = 'PAUSED'; }
+            status.dataset.state = state;
+            statetext.textContent = label;
         }
     }
 
@@ -254,9 +292,9 @@ export class ControlPanel {
         for (const elId of ['metric-safety', 'quick-safety']) {
             const safetyEl = document.getElementById(elId);
             if (safetyEl) {
-                if (m.safetyScore >= 90) safetyEl.style.color = '#00e676';
-                else if (m.safetyScore >= 70) safetyEl.style.color = '#ffc107';
-                else safetyEl.style.color = '#ff1744';
+                if (m.safetyScore >= 90) safetyEl.style.color = '#36f5a0';
+                else if (m.safetyScore >= 70) safetyEl.style.color = '#ffc24b';
+                else safetyEl.style.color = '#ff4d5e';
             }
         }
 
@@ -265,27 +303,51 @@ export class ControlPanel {
     }
 
     _drawMiniChart(engine) {
+        // Skip drawing when the Metrics tab isn't visible (canvas is hidden).
+        if (this._activeTab !== 'metrics') return;
         const canvas = document.getElementById('throughput-chart');
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         const history = engine.perfTracker.getHistory();
         const w = canvas.width, h = canvas.height;
 
-        ctx.fillStyle = 'rgba(10, 14, 26, 0.8)';
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = 'rgba(6, 10, 19, 0.85)';
         ctx.fillRect(0, 0, w, h);
 
         if (history.length < 2) return;
 
         const maxTP = Math.max(...history.map(h => h.throughput), 1);
+
+        // Area fill under the trend
         ctx.beginPath();
-        ctx.strokeStyle = '#00e5ff';
+        ctx.moveTo(0, h);
+        for (let i = 0; i < history.length; i++) {
+            const x = (i / (history.length - 1)) * w;
+            const y = h - (history[i].throughput / maxTP) * (h - 10) - 5;
+            ctx.lineTo(x, y);
+        }
+        ctx.lineTo(w, h);
+        ctx.closePath();
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, 'rgba(46, 230, 255, 0.28)');
+        grad.addColorStop(1, 'rgba(46, 230, 255, 0)');
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // Trend line
+        ctx.beginPath();
+        ctx.strokeStyle = '#2ee6ff';
         ctx.lineWidth = 1.5;
+        ctx.shadowColor = 'rgba(46, 230, 255, 0.6)';
+        ctx.shadowBlur = 6;
         for (let i = 0; i < history.length; i++) {
             const x = (i / (history.length - 1)) * w;
             const y = h - (history[i].throughput / maxTP) * (h - 10) - 5;
             if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         }
         ctx.stroke();
+        ctx.shadowBlur = 0;
     }
 
     _updateAircraftList(engine) {

@@ -209,7 +209,7 @@ ai:
 
 ## Testing
 
-The project includes a comprehensive test suite built with [Vitest](https://vitest.dev/), covering all backend engine logic, AI decision making and logging modules (**251 tests across 13 files**).
+The project includes a comprehensive test suite built with [Vitest](https://vitest.dev/), covering all backend engine logic, AI decision making and logging modules (**250 tests across 13 files**).
 
 ```bash
 # Install dependencies
