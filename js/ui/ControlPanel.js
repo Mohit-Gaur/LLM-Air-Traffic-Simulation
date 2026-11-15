@@ -239,8 +239,11 @@ export class ControlPanel {
     _updateTopbar(engine) {
         const m = engine.perfTracker.getMetrics();
         const set = (id, value, unit) => {
-            const e = document.getElementById(id);
-            if (e) e.innerHTML = `${value}<small>${unit}</small>`;
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.firstChild.textContent = value;
+            const small = el.querySelector('small');
+            if (small) small.textContent = unit;
         };
         set('hud-clock', m.elapsed.toFixed(1), 'min');
         set('hud-aircraft', engine.stateManager.getActiveAircraft().length, 'ac');

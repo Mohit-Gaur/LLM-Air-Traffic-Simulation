@@ -25,7 +25,7 @@
                 </span>
             </div>
 
-            <div class="telemetry" role="status" aria-live="polite">
+            <div class="telemetry">
                 <div class="tlm">
                     <span class="tlm-label">Mission Clock</span>
                     <span class="tlm-value" id="hud-clock">0.0<small>min</small></span>
@@ -46,7 +46,8 @@
                     <span class="tlm-label">Refresh</span>
                     <span class="tlm-value" id="hud-fps">0<small>fps</small></span>
                 </div>
-                <div class="tlm tlm-status" id="hud-status" data-state="run">
+                <div class="tlm tlm-status" id="hud-status" data-state="run"
+                     role="status" aria-live="polite">
                     <span class="tlm-dot"></span>
                     <span class="tlm-statetext" id="hud-statetext">RUNNING</span>
                 </div>
@@ -83,7 +84,7 @@
             <!-- Instrument Sidebar -->
             <aside id="sidebar" data-boot="2">
                 <!-- Mode Selector -->
-                <nav class="tabs" role="tablist">
+                <nav class="tabs">
                     <button class="tab-btn active" data-tab="controls">Controls</button>
                     <button class="tab-btn" data-tab="aircraft">Aircraft</button>
                     <button class="tab-btn" data-tab="decisions">Decisions</button>
