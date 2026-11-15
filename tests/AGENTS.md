@@ -13,7 +13,7 @@ npm run test:unit         # Unit tests only
 npm run test:integration  # Integration tests only
 ```
 
-All 251 tests should pass. Total runtime target is under 10 seconds.
+All tests should pass. Total runtime target is under 10 seconds.
 
 ## Directory Structure
 

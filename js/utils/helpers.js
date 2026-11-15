@@ -3,19 +3,19 @@
 // ============================================================================
 
 export const STATE_COLORS = {
-    approaching: '#00e5ff',
-    holding_air: '#ffc107',
-    landing: '#76ff03',
-    go_around: '#ff6d00',
-    landed: '#8bc34a',
-    taxiing_to_gate: '#ff9800',
-    boarding: '#f48fb1',
-    at_gate: '#9e9e9e',
-    taxiing_to_runway: '#ff9800',
-    holding_ground: '#ffc107',
-    takeoff: '#e040fb',
-    departing: '#7c4dff',
-    removed: '#444'
+    approaching: '#2ee6ff',
+    holding_air: '#ffc24b',
+    landing: '#36f5a0',
+    go_around: '#ff8a3d',
+    landed: '#7fe0a0',
+    taxiing_to_gate: '#ff9f45',
+    boarding: '#f06bbf',
+    at_gate: '#8595ad',
+    taxiing_to_runway: '#ff9f45',
+    holding_ground: '#ffc24b',
+    takeoff: '#e85ad0',
+    departing: '#9d8cff',
+    removed: '#3a4658'
 };
 
 export function distance(a, b) {

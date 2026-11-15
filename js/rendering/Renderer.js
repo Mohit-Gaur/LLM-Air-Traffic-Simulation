@@ -28,8 +28,8 @@ export class Renderer {
         this._animFrame++;
         this.radarAngle += 0.008;
 
-        // Clear
-        ctx.fillStyle = '#0a0e1a';
+        // Clear — deep scope background
+        ctx.fillStyle = '#060a13';
         ctx.fillRect(0, 0, this.width, this.height);
 
         // Draw layers
@@ -43,26 +43,69 @@ export class Renderer {
     }
 
     _drawGrid(ctx) {
-        ctx.strokeStyle = 'rgba(0, 229, 255, 0.04)';
+        const cx = this.width * 0.55, cy = this.height * 0.5;
+
+        // Fine reference lattice
+        ctx.strokeStyle = 'rgba(46, 230, 255, 0.035)';
         ctx.lineWidth = 1;
-        for (let x = 0; x < this.width; x += 50) {
+        for (let x = 0; x < this.width; x += 56) {
             ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, this.height); ctx.stroke();
         }
-        for (let y = 0; y < this.height; y += 50) {
+        for (let y = 0; y < this.height; y += 56) {
             ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(this.width, y); ctx.stroke();
         }
+
+        // Concentric range rings
+        const maxR = Math.hypot(this.width, this.height) * 0.5;
+        const step = 120;
+        ctx.strokeStyle = 'rgba(46, 230, 255, 0.10)';
+        ctx.lineWidth = 1;
+        for (let r = step; r < maxR; r += step) {
+            ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+        }
+
+        // Bearing ticks / compass rose at 30° increments
+        ctx.strokeStyle = 'rgba(46, 230, 255, 0.16)';
+        ctx.fillStyle = 'rgba(46, 230, 255, 0.32)';
+        ctx.font = '9px "IBM Plex Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const tickR = Math.min(this.width, this.height) * 0.46;
+        for (let deg = 0; deg < 360; deg += 30) {
+            const a = (deg - 90) * Math.PI / 180;
+            const x1 = cx + Math.cos(a) * (tickR - 10);
+            const y1 = cy + Math.sin(a) * (tickR - 10);
+            const x2 = cx + Math.cos(a) * tickR;
+            const y2 = cy + Math.sin(a) * tickR;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+            const lx = cx + Math.cos(a) * (tickR + 12);
+            const ly = cy + Math.sin(a) * (tickR + 12);
+            ctx.fillText(String(deg / 10).padStart(2, '0'), lx, ly);
+        }
+        ctx.textBaseline = 'alphabetic';
     }
 
     _drawRadarSweep(ctx) {
         const cx = this.width * 0.55, cy = this.height * 0.5;
         const radius = Math.max(this.width, this.height);
         const gradient = ctx.createConicGradient(this.radarAngle, cx, cy);
-        gradient.addColorStop(0, 'rgba(0, 229, 255, 0.06)');
-        gradient.addColorStop(0.05, 'rgba(0, 229, 255, 0.02)');
-        gradient.addColorStop(0.1, 'rgba(0, 229, 255, 0)');
-        gradient.addColorStop(1, 'rgba(0, 229, 255, 0)');
+        gradient.addColorStop(0, 'rgba(46, 230, 255, 0.07)');
+        gradient.addColorStop(0.05, 'rgba(46, 230, 255, 0.025)');
+        gradient.addColorStop(0.1, 'rgba(46, 230, 255, 0)');
+        gradient.addColorStop(1, 'rgba(46, 230, 255, 0)');
         ctx.fillStyle = gradient;
         ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI * 2); ctx.fill();
+
+        // Leading sweep line
+        ctx.save();
+        ctx.strokeStyle = 'rgba(46, 230, 255, 0.28)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(this.radarAngle) * radius, cy + Math.sin(this.radarAngle) * radius);
+        ctx.stroke();
+        ctx.restore();
     }
 
     _drawAirport(ctx, stateManager) {
@@ -72,32 +115,32 @@ export class Renderer {
         tg.addColorStop(0, 'rgba(30, 40, 60, 0.9)');
         tg.addColorStop(1, 'rgba(20, 30, 50, 0.7)');
         ctx.fillStyle = tg;
-        ctx.strokeStyle = 'rgba(0, 229, 255, 0.3)';
+        ctx.strokeStyle = 'rgba(46, 230, 255, 0.3)';
         ctx.lineWidth = 2;
         this._roundRect(ctx, term.x, term.y, term.width, term.height, 8);
         ctx.fill(); ctx.stroke();
 
         // Terminal label
-        ctx.fillStyle = 'rgba(0, 229, 255, 0.6)';
-        ctx.font = '11px Inter, sans-serif';
+        ctx.fillStyle = 'rgba(46, 230, 255, 0.6)';
+        ctx.font = '600 11px "Chakra Petch", sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('TERMINAL', term.x + term.width / 2, term.y + 18);
 
         // Gates
         for (const gate of stateManager.gates) {
             const gx = gate.x, gy = gate.y;
-            ctx.fillStyle = gate.occupied ? 'rgba(255, 152, 0, 0.3)' : 'rgba(0, 229, 255, 0.15)';
-            ctx.strokeStyle = gate.occupied ? 'rgba(255, 152, 0, 0.6)' : 'rgba(0, 229, 255, 0.3)';
+            ctx.fillStyle = gate.occupied ? 'rgba(255, 194, 75, 0.3)' : 'rgba(46, 230, 255, 0.15)';
+            ctx.strokeStyle = gate.occupied ? 'rgba(255, 194, 75, 0.6)' : 'rgba(46, 230, 255, 0.32)';
             ctx.lineWidth = 1.5;
             ctx.beginPath(); ctx.arc(gx, gy, 12, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 
             // Gate connector to terminal
-            ctx.strokeStyle = 'rgba(100, 120, 150, 0.3)';
+            ctx.strokeStyle = 'rgba(120, 145, 180, 0.3)';
             ctx.lineWidth = 3;
             ctx.beginPath(); ctx.moveTo(term.x + term.width, gy); ctx.lineTo(gx - 12, gy); ctx.stroke();
 
-            ctx.fillStyle = 'rgba(200, 220, 255, 0.7)';
-            ctx.font = '9px Inter, sans-serif';
+            ctx.fillStyle = 'rgba(210, 228, 255, 0.75)';
+            ctx.font = '9px "IBM Plex Mono", monospace';
             ctx.textAlign = 'center';
             ctx.fillText(`G${gate.id}`, gx, gy + 3);
         }
@@ -125,25 +168,25 @@ export class Renderer {
             }
 
             // Runway border
-            ctx.strokeStyle = rw.occupied ? 'rgba(255, 82, 82, 0.6)' : 'rgba(0, 229, 255, 0.3)';
+            ctx.strokeStyle = rw.occupied ? 'rgba(255, 77, 94, 0.6)' : 'rgba(46, 230, 255, 0.32)';
             ctx.lineWidth = 1.5;
             ctx.strokeRect(rx, ry - 12, rLen, 24);
 
             // Label
-            ctx.fillStyle = rw.occupied ? 'rgba(255, 82, 82, 0.9)' : 'rgba(0, 229, 255, 0.8)';
-            ctx.font = 'bold 11px "JetBrains Mono", monospace';
+            ctx.fillStyle = rw.occupied ? 'rgba(255, 77, 94, 0.95)' : 'rgba(46, 230, 255, 0.85)';
+            ctx.font = '600 11px "IBM Plex Mono", monospace';
             ctx.textAlign = 'center';
             ctx.fillText(rw.label, rx + rLen / 2, ry - 18);
 
             // Status
             if (rw.occupied) {
-                ctx.fillStyle = 'rgba(255, 82, 82, 0.6)';
-                ctx.font = '9px Inter, sans-serif';
+                ctx.fillStyle = 'rgba(255, 77, 94, 0.7)';
+                ctx.font = '9px "IBM Plex Mono", monospace';
                 ctx.fillText('IN USE', rx + rLen / 2, ry + 30);
             }
 
             // Taxiway connector from gates to runway
-            ctx.strokeStyle = 'rgba(100, 120, 150, 0.2)';
+            ctx.strokeStyle = 'rgba(120, 145, 180, 0.2)';
             ctx.lineWidth = 6;
             ctx.beginPath();
             ctx.moveTo(200, ry);
@@ -152,7 +195,7 @@ export class Renderer {
         }
 
         // Approach corridor indicator
-        ctx.strokeStyle = 'rgba(0, 229, 255, 0.08)';
+        ctx.strokeStyle = 'rgba(46, 230, 255, 0.09)';
         ctx.lineWidth = 1;
         ctx.setLineDash([5, 10]);
         for (const rw of stateManager.runways) {
@@ -251,15 +294,15 @@ export class Renderer {
         this._drawFuelBar(ctx, ac, x, y, size);
 
         // Callsign label
-        ctx.fillStyle = 'rgba(200, 220, 255, 0.85)';
-        ctx.font = '10px "JetBrains Mono", monospace';
+        ctx.fillStyle = 'rgba(210, 228, 255, 0.9)';
+        ctx.font = '600 10px "IBM Plex Mono", monospace';
         ctx.textAlign = 'center';
         ctx.fillText(ac.callsign, x, y - size - 14);
 
         // State tag (small)
         const stateLabel = ac.state.replace(/_/g, ' ').toUpperCase();
         ctx.fillStyle = color + 'aa';
-        ctx.font = '8px Inter, sans-serif';
+        ctx.font = '8px "IBM Plex Mono", monospace';
         ctx.fillText(stateLabel, x, y + size + 14);
 
         // Holding pattern circle indicator
@@ -673,46 +716,39 @@ export class Renderer {
         // Percentage text for low/emergency
         if (ac.fuelLow || ac.fuelEmergency) {
             ctx.fillStyle = fuelColor;
-            ctx.font = 'bold 8px "JetBrains Mono", monospace';
+            ctx.font = '600 8px "IBM Plex Mono", monospace';
             ctx.textAlign = 'center';
             ctx.fillText(`${Math.round(ac.fuel)}%`, x, by - 3);
         }
     }
 
     _drawHUD(ctx, engine) {
-        // Top-left: Simulation info
-        ctx.fillStyle = 'rgba(0, 229, 255, 0.8)';
-        ctx.font = 'bold 12px "JetBrains Mono", monospace';
-        ctx.textAlign = 'left';
-        ctx.fillText(`FPS: ${engine.fps}`, 10, 20);
-        ctx.fillText(`Speed: ${engine.speed}x`, 10, 36);
-        ctx.fillText(`Aircraft: ${engine.stateManager.getActiveAircraft().length}`, 10, 52);
+        // Telemetry (FPS / speed / counts / provider) now lives in the topbar.
+        // The scope only surfaces spatially-relevant alerts.
 
-        // AI provider indicator
-        ctx.fillStyle = 'rgba(118, 255, 3, 0.8)';
-        ctx.fillText(`AI: ${engine.currentProvider.getName()}`, 10, 68);
-
-        // Status indicator
+        // Paused scrim
         if (engine.paused) {
-            ctx.fillStyle = 'rgba(255, 193, 7, 0.9)';
-            ctx.font = 'bold 18px Inter, sans-serif';
+            ctx.fillStyle = 'rgba(255, 194, 75, 0.9)';
+            ctx.font = '700 18px "Chakra Petch", sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText('⏸ PAUSED', this.width / 2, 30);
+            ctx.fillText('⏸ PAUSED', this.width / 2, 34);
         }
 
-        // Warnings indicator
+        // Proximity warnings (top-right of scope)
         const warnings = engine.collisionSystem.getWarnings();
         if (warnings.length > 0) {
-            ctx.fillStyle = 'rgba(255, 193, 7, 0.8)';
-            ctx.font = 'bold 10px "JetBrains Mono", monospace';
+            ctx.fillStyle = 'rgba(255, 194, 75, 0.85)';
+            ctx.font = '600 11px "IBM Plex Mono", monospace';
             ctx.textAlign = 'right';
-            ctx.fillText(`⚠ ${warnings.length} proximity warnings`, this.width - 10, 20);
+            ctx.fillText(`⚠ ${warnings.length} PROXIMITY`, this.width - 26, 34);
         }
 
         const crashes = engine.crashAnalyzer.getReportCount();
         if (crashes > 0) {
-            ctx.fillStyle = 'rgba(255, 23, 68, 0.9)';
-            ctx.fillText(`💥 ${crashes} crash${crashes > 1 ? 'es' : ''}`, this.width - 10, 36);
+            ctx.fillStyle = 'rgba(255, 77, 94, 0.95)';
+            ctx.font = '600 11px "IBM Plex Mono", monospace';
+            ctx.textAlign = 'right';
+            ctx.fillText(`💥 ${crashes} CRASH${crashes > 1 ? 'ES' : ''}`, this.width - 26, 52);
         }
     }
 
